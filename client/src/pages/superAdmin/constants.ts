@@ -375,7 +375,8 @@ export const defaultCourseFields: FieldConfig[] = [
     position: 7,
     category: 'status',
     iconName: 'UserCheck',
-    inputType: 'checkbox'
+    inputType: 'checkbox',
+    defaultValue: true
   }
 ]
 

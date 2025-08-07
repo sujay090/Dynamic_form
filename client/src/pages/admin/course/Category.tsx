@@ -25,6 +25,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 
@@ -67,6 +75,8 @@ export default function Category() {
     Category,
     "id" | "name"
   >>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [categoryToDelete, setCategoryToDelete] = React.useState<Category | null>(null);
 
   type Pagination = {
     limit: number;
@@ -119,20 +129,28 @@ export default function Category() {
       });
   };
 
-  const deleteCategory = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
-      deleteCourseCategoryAPI({ id })
-        .then((res) => {
-          if (res.status === 200) {
-            toast.success("Category deleted successfully");
-            setReload(!reload);
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          toast.error("Failed to delete category");
-        });
-    }
+  const deleteCategory = (category: Category) => {
+    console.log('🗑️ Delete button clicked for category:', category.id);
+    setCategoryToDelete(category);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!categoryToDelete) return;
+    
+    deleteCourseCategoryAPI({ id: categoryToDelete.id })
+      .then((res) => {
+        if (res.status === 200) {
+          toast.success("Category deleted successfully");
+          setIsDeleteDialogOpen(false);
+          setCategoryToDelete(null);
+          setReload(!reload);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Failed to delete category");
+      });
   };
 
   const columns: ColumnDef<Category>[] = [
@@ -196,7 +214,11 @@ export default function Category() {
             <PencilLine size={15} />
           </button>
           <button
-            onClick={() => deleteCategory(row.original._id)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              deleteCategory(row.original);
+            }}
             className="rounded-full p-1 hover:bg-red-100"
             title="Delete category"
           >
@@ -356,6 +378,57 @@ export default function Category() {
             }}
             setEditDta={() => setEditData(null)}
           />
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader className="text-center">
+                <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                  <Trash2 className="h-6 w-6 text-red-600" />
+                </div>
+                <DialogTitle className="text-xl font-bold text-red-600">
+                  Delete Category
+                </DialogTitle>
+                <DialogDescription className="text-center text-gray-600 mt-2">
+                  This action cannot be undone. The category will be permanently deleted from the system.
+                </DialogDescription>
+              </DialogHeader>
+              
+              {categoryToDelete && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="text-center">
+                    <p className="font-semibold text-gray-900">
+                      {categoryToDelete.name}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Status: {categoryToDelete.isActive ? 'Active' : 'Inactive'}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              <DialogFooter className="mt-6 flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsDeleteDialogOpen(false);
+                    setCategoryToDelete(null);
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={confirmDelete}
+                  className="flex-1 bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Yes, Delete Category
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </Card>
     </div>

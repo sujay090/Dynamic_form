@@ -55,6 +55,8 @@ export default function DynamicBranchList() {
   const [search, setSearch] = React.useState("");
   const [selectedBranch, setSelectedBranch] = React.useState<DynamicFormData | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [branchToDelete, setBranchToDelete] = React.useState<DynamicFormData | null>(null);
   const [editFormData, setEditFormData] = React.useState<{[key: string]: any}>({});
 
   // Fetch branches data
@@ -123,17 +125,26 @@ export default function DynamicBranchList() {
 
   // Handle delete
   const handleDelete = (branch: DynamicFormData) => {
-    if (window.confirm("Are you sure you want to delete this branch?")) {
-      deleteDynamicFormDataAPI(branch._id)
-        .then(() => {
-          toast.success("Branch deleted successfully");
-          fetchBranches(); // Refresh data
-        })
-        .catch((err) => {
-          console.error("Error deleting branch:", err);
-          toast.error(err?.response?.data?.message || "Failed to delete branch");
-        });
-    }
+    console.log('🗑️ Delete button clicked for branch:', branch._id);
+    setBranchToDelete(branch);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Confirm delete
+  const confirmDelete = () => {
+    if (!branchToDelete) return;
+    
+    deleteDynamicFormDataAPI(branchToDelete._id)
+      .then(() => {
+        toast.success("Branch deleted successfully");
+        setIsDeleteDialogOpen(false);
+        setBranchToDelete(null);
+        fetchBranches(); // Refresh data
+      })
+      .catch((err) => {
+        console.error("Error deleting branch:", err);
+        toast.error(err?.response?.data?.message || "Failed to delete branch");
+      });
   };
 
   // Filter data based on search
@@ -235,7 +246,11 @@ export default function DynamicBranchList() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleDelete(row.original)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDelete(row.original);
+            }}
             className="text-red-600 hover:text-red-800"
             title="Delete Branch"
           >
@@ -384,6 +399,60 @@ export default function DynamicBranchList() {
             </Button>
             <Button onClick={handleSaveEdit}>
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-red-600">
+              Delete Branch
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-600 mt-2">
+              This action cannot be undone. The branch will be permanently deleted from the system.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {branchToDelete && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="text-center">
+                <p className="font-semibold text-gray-900">
+                  {branchToDelete.fieldsData.find(f => f.name === "branchName")?.value || "Branch"}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Location: {branchToDelete.fieldsData.find(f => f.name === "branchLocation" || f.name === "location")?.value || "N/A"}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Contact: {branchToDelete.fieldsData.find(f => f.name === "contactNumber" || f.name === "phone")?.value || "N/A"}
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="mt-6 flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setBranchToDelete(null);
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              className="flex-1 bg-red-600 hover:bg-red-700 focus:ring-red-500"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Yes, Delete Branch
             </Button>
           </DialogFooter>
         </DialogContent>

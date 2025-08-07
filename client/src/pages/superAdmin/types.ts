@@ -10,6 +10,7 @@ export interface FieldConfig {
   inputType: 'text' | 'email' | 'tel' | 'number' | 'date' | 'select' | 'textarea' | 'checkbox' | 'radio' | 'file'
   options?: string[]
   searchable?: boolean
+  defaultValue?: any
 }
 
 export interface CustomForm {

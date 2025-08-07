@@ -16,6 +16,7 @@ import {
   type DynamicFormData 
 } from "@/API/services/superAdminService"
 import { getAllCourseCategoryAPI, getAllCourseAPI } from "@/API/services/courseService"
+import { getDynamicFormDataAPI } from "@/API/services/studentService"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -203,38 +204,73 @@ const SuperAdminPanel = () => {
     try {
       console.log('📚 Loading courses for student selection...')
       
-      // Try to get actual courses first
-      const coursesResponse = await getAllCourseAPI()
-      console.log('📚 Courses API response:', coursesResponse)
+      // Try to get courses from dynamic form data (courses created via Course Management)
+      const coursesResponse = await getDynamicFormDataAPI("course")
+      console.log('📚 Dynamic courses API response:', coursesResponse)
       
       let courseOptions: string[] = []
       
-      // Check if we have actual courses in database
-      if (coursesResponse && coursesResponse.data && Array.isArray(coursesResponse.data) && coursesResponse.data.length > 0) {
-        console.log('✅ Found actual courses, using them...')
-        courseOptions = coursesResponse.data.map((course: any, index: number) => {
-          console.log(`📚 Processing course ${index + 1}:`, course)
-          const courseName = course.label || course.name || course.courseName || `Course ${index + 1}`
+      // Check if we have dynamic courses in database
+      if (coursesResponse && coursesResponse.data && coursesResponse.data.data && Array.isArray(coursesResponse.data.data) && coursesResponse.data.data.length > 0) {
+        console.log('✅ Found dynamic courses, using them...')
+        courseOptions = coursesResponse.data.data.map((courseData: any, index: number) => {
+          console.log(`📚 Processing course ${index + 1}:`, courseData)
+          
+          // Extract course name from fieldsData structure
+          const getFieldValue = (fieldsData: Array<{name: string; value: any}>, fieldName: string) => {
+            // Check if fieldsData has the nested structure
+            const fieldsDataField = fieldsData.find((f: any) => f.name === 'fieldsData');
+            
+            if (fieldsDataField && Array.isArray(fieldsDataField.value)) {
+              // If it's the nested structure, look in the value array
+              const field = fieldsDataField.value.find((f: any) => f.name === fieldName);
+              return field ? field.value : "";
+            } else {
+              // If it's the direct structure, look directly
+              const field = fieldsData.find((f: any) => f.name === fieldName);
+              return field ? field.value : "";
+            }
+          };
+          
+          const courseName = getFieldValue(courseData.fieldsData, "courseName") || `Course ${index + 1}`
           return courseName
         })
-        console.log('✅ Using actual course options:', courseOptions)
+        console.log('✅ Using dynamic course options:', courseOptions)
       } else {
-        console.log('⚠️ No actual courses found, falling back to course categories...')
+        console.log('⚠️ No dynamic courses found, trying traditional Course API...')
         
-        // Fallback: Use course categories if no actual courses exist
+        // Fallback: Try traditional Course API
         try {
-          const categoriesResponse = await getAllCourseCategoryAPI()
-          console.log('📚 Categories fallback response:', categoriesResponse)
+          const traditionalCoursesResponse = await getAllCourseAPI()
+          console.log('📚 Traditional courses API response:', traditionalCoursesResponse)
           
-          if (categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
-            courseOptions = categoriesResponse.data.map((cat: any) => cat.label || cat.name)
-            console.log('✅ Using course categories as fallback:', courseOptions)
+          if (traditionalCoursesResponse && traditionalCoursesResponse.data && Array.isArray(traditionalCoursesResponse.data) && traditionalCoursesResponse.data.length > 0) {
+            courseOptions = traditionalCoursesResponse.data.map((course: any) => {
+              return course.label || course.name || course.courseName
+            })
+            console.log('✅ Using traditional course options:', courseOptions)
           }
-        } catch (catError) {
-          console.error('❌ Error loading course categories as fallback:', catError)
-          // Final fallback to static options
-          courseOptions = ['Computer Science', 'Business Administration', 'Management']
-          console.log('✅ Using static fallback options:', courseOptions)
+        } catch (traditionalError) {
+          console.error('❌ Error loading traditional courses:', traditionalError)
+        }
+        
+        // If still no courses, fallback to course categories
+        if (courseOptions.length === 0) {
+          console.log('⚠️ No traditional courses found, falling back to course categories...')
+          try {
+            const categoriesResponse = await getAllCourseCategoryAPI()
+            console.log('📚 Categories fallback response:', categoriesResponse)
+            
+            if (categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
+              courseOptions = categoriesResponse.data.map((cat: any) => cat.label || cat.name)
+              console.log('✅ Using course categories as fallback:', courseOptions)
+            }
+          } catch (catError) {
+            console.error('❌ Error loading course categories as fallback:', catError)
+            // Final fallback to static options
+            courseOptions = ['Computer Science', 'Business Administration', 'Management']
+            console.log('✅ Using static fallback options:', courseOptions)
+          }
         }
       }
       

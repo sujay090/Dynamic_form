@@ -69,7 +69,7 @@ export default function DynamicCourseList() {
   const [reload, setReload] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
-  const [limit] = React.useState(10);
+  const [limit, setLimit] = React.useState(10);
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
@@ -77,7 +77,9 @@ export default function DynamicCourseList() {
   const [order, setOrder] = React.useState<"asc" | "desc">("asc");
   const [editData, setEditData] = React.useState<DynamicCourse | null>(null);
   const [editFormData, setEditFormData] = React.useState<Record<string, string>>({});
-  const [categories, setCategories] = React.useState<{name: string, value: string}[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [courseToDelete, setCourseToDelete] = React.useState<DynamicCourse | null>(null);
+  const [categories, setCategories] = React.useState<{id: string, name: string, value: string, label: string}[]>([]);
 
   type Pagination = {
     limit: number;
@@ -125,32 +127,40 @@ export default function DynamicCourseList() {
       try {
         console.log("Loading course categories...");
         const response = await getAllCourseCategoryAPI();
-        console.log("Full API response:", response.data);
+        console.log("Categories API response:", response);
+        console.log("Categories API response.data:", response.data);
         
-        if (response.data && response.data.data) {
-          const categoryOptions = response.data.data.map((cat: any) => ({
-            name: cat.label || cat.name,
-            value: cat.label || cat.value || cat.name
+        // Handle different possible API response structures
+        let categoryData = null;
+        if (response.data?.data) {
+          categoryData = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          categoryData = response.data;
+        } else {
+          console.warn("Unexpected API response structure:", response.data);
+          setCategories([]);
+          return;
+        }
+        
+        if (Array.isArray(categoryData)) {
+          // Map the category data to our expected format
+          const categoryMap = categoryData.map((cat: any) => ({
+            id: cat.value || cat._id?.toString() || cat._id, // Handle different ID formats
+            name: cat.label || cat.name, // Handle different name formats
+            value: cat.value || cat._id?.toString() || cat._id,
+            label: cat.label || cat.name
           }));
           
-          console.log("Mapped categories:", categoryOptions);
-          setCategories(categoryOptions);
+          console.log("Mapped categories:", categoryMap);
+          setCategories(categoryMap);
+        } else {
+          console.warn("Category data is not an array:", categoryData);
+          setCategories([]);
         }
       } catch (error) {
         console.error("Error loading categories:", error);
-        // Fallback to static categories
-        setCategories([
-          'Computer Fundamentals',
-          'Programming', 
-          'Web Development',
-          'Data Science',
-          'Digital Marketing',
-          'Accounting Software',
-          'Design & Multimedia',
-          'Hardware & Networking',
-          'Office Applications',
-          'Certification Courses'
-        ].map(cat => ({ name: cat, value: cat })));
+        toast.error("Failed to load categories");
+        setCategories([]);
       }
     };
 
@@ -196,16 +206,24 @@ export default function DynamicCourseList() {
     setIsOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this course?")) {
-      try {
-        await deleteDynamicFormDataAPI(id);
-        toast.success("Course deleted successfully");
-        setReload(!reload);
-      } catch (err) {
-        console.error("Delete error:", err);
-        toast.error("Failed to delete course");
-      }
+  const handleDelete = (course: DynamicCourse) => {
+    console.log('🗑️ Delete button clicked for course:', course._id);
+    setCourseToDelete(course);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!courseToDelete) return;
+    
+    try {
+      await deleteDynamicFormDataAPI(courseToDelete._id);
+      toast.success("Course deleted successfully");
+      setIsDeleteDialogOpen(false);
+      setCourseToDelete(null);
+      setReload(!reload);
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Failed to delete course");
     }
   };
 
@@ -321,8 +339,14 @@ export default function DynamicCourseList() {
       accessorKey: "category",
       header: "Category",
       cell: ({ row }) => {
-        const category = getFieldValue(row.original.fieldsData, "category");
-        return <div className="capitalize">{category}</div>;
+        const categoryId = getFieldValue(row.original.fieldsData, "category");
+        console.log("Category ID for row:", categoryId, "Available categories:", categories);
+        
+        // Find the category name from the categories array
+        const categoryObj = categories.find(cat => cat.id === categoryId || cat.value === categoryId);
+        const displayName = categoryObj ? categoryObj.name : categoryId || "Unknown";
+        
+        return <div className="capitalize">{displayName}</div>;
       },
     },
     {
@@ -330,16 +354,17 @@ export default function DynamicCourseList() {
       header: () => <div className="text-center">Status</div>,
       cell: ({ row }) => {
         const isActive = getFieldValue(row.original.fieldsData, "isActive");
+        console.log("IsActive value for row:", isActive, "Type:", typeof isActive, "Full data:", row.original.fieldsData);
         return (
           <div className="text-center">
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                isActive === "true"
+                isActive === "true" || isActive === true
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
               }`}
             >
-              {isActive === "true" ? "Active" : "Inactive"}
+              {isActive === "true" || isActive === true ? "Active" : "Inactive"}
             </span>
           </div>
         );
@@ -361,7 +386,11 @@ export default function DynamicCourseList() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleDelete(row.original._id)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDelete(row.original);
+            }}
             className="h-8 w-8 text-red-600 hover:text-red-800"
           >
             <Trash2 className="h-4 w-4" />
@@ -403,6 +432,36 @@ export default function DynamicCourseList() {
         <CardHeader className="font-bold h-[36px]">
           <div className="w-full h-full flex justify-between items-center">
             <h2>Course Management</h2>
+          </div>
+        </CardHeader>
+
+        <div className="flex items-center py-4 justify-between">
+          <Input
+            placeholder="Search courses..."
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+            className="max-w-sm"
+          />
+          <div className="flex gap-1 h-full">
+            <SelectInput
+              width={"100px"}
+              placeholder="Limit"
+              title="Limit"
+              value={limit}
+              onChange={(val) => {
+                setLimit(val);
+                setPage(1);
+              }}
+              values={[
+                { name: "10", value: 10 },
+                { name: "20", value: 20 },
+                { name: "50", value: 50 },
+                { name: "100", value: 100 },
+              ]}
+            />
             <Button
               onClick={() => navigate("/admin/courses/add")}
               className="text-sm font-semibold"
@@ -410,15 +469,6 @@ export default function DynamicCourseList() {
               Add Course
             </Button>
           </div>
-        </CardHeader>
-
-        <div className="flex items-center py-4">
-          <Input
-            placeholder="Search courses..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="max-w-sm"
-          />
         </div>
 
         <div className="rounded-md border">
@@ -583,7 +633,10 @@ export default function DynamicCourseList() {
                   width="100%"
                   placeholder="Select category"
                   title="Category"
-                  values={categories}
+                  values={categories.map(cat => ({
+                    name: cat.label,
+                    value: cat.value
+                  }))}
                   value={editFormData.category || ""}
                   onChange={(value) => handleInputChange("category", value)}
                 />
@@ -615,6 +668,64 @@ export default function DynamicCourseList() {
             </Button>
             <Button type="button" onClick={handleSaveEdit}>
               Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-red-600">
+              Delete Course
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-600 mt-2">
+              This action cannot be undone. The course will be permanently deleted from the system.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {courseToDelete && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="text-center">
+                <p className="font-semibold text-gray-900">
+                  {getFieldValue(courseToDelete.fieldsData, "courseName")}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Category: {(() => {
+                    const categoryId = getFieldValue(courseToDelete.fieldsData, "category");
+                    const categoryObj = categories.find(cat => cat.id === categoryId || cat.value === categoryId);
+                    return categoryObj ? categoryObj.name : categoryId || "Unknown";
+                  })()}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Duration: {getFieldValue(courseToDelete.fieldsData, "duration")} months
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="mt-6 flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setCourseToDelete(null);
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              className="flex-1 bg-red-600 hover:bg-red-700 focus:ring-red-500"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Yes, Delete Course
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -7,7 +7,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { PencilLine, GraduationCap, Trash2 } from "lucide-react";
+import { GraduationCap, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,6 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   getDynamicFormDataAPI, 
-  updateDynamicFormDataAPI,
   deleteDynamicFormDataAPI 
 } from "@/API/services/studentService";
 
@@ -53,9 +52,8 @@ export default function PassOutStudents() {
   const [data, setData] = React.useState<DynamicFormData[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [search, setSearch] = React.useState("");
-  const [selectedStudent, setSelectedStudent] = React.useState<DynamicFormData | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
-  const [editFormData, setEditFormData] = React.useState<{[key: string]: any}>({});
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [studentToDelete, setStudentToDelete] = React.useState<DynamicFormData | null>(null);
 
   // Fetch students data and filter for completed courses
   const fetchPassOutStudents = React.useCallback(() => {
@@ -104,52 +102,27 @@ export default function PassOutStudents() {
     return field?.value || "N/A";
   };
 
-  // Handle edit
-  const handleEdit = (student: DynamicFormData) => {
-    setSelectedStudent(student);
-    // Convert fieldsData array to object for easier editing
-    const formData: {[key: string]: any} = {};
-    student.fieldsData.forEach(field => {
-      formData[field.name] = field.value;
-    });
-    setEditFormData(formData);
-    setIsEditDialogOpen(true);
-  };
-
   // Handle delete
   const handleDelete = (student: DynamicFormData) => {
-    if (window.confirm("Are you sure you want to delete this pass out student?")) {
-      deleteDynamicFormDataAPI(student._id)
-        .then(() => {
-          toast.success("Student deleted successfully");
-          fetchPassOutStudents(); // Refresh data
-        })
-        .catch((err) => {
-          console.error("Error deleting student:", err);
-          toast.error(err?.response?.data?.message || "Failed to delete student");
-        });
-    }
+    console.log('🗑️ Delete button clicked for student:', student._id);
+    setStudentToDelete(student);
+    setIsDeleteDialogOpen(true);
   };
 
-  // Handle save edit
-  const handleSaveEdit = () => {
-    if (!selectedStudent) return;
-
-    // Convert form data back to fieldsData format
-    const fieldsData = Object.entries(editFormData).map(([name, value]) => ({
-      name,
-      value
-    }));
-
-    updateDynamicFormDataAPI(selectedStudent._id, { fieldsData })
+  // Confirm delete
+  const confirmDelete = () => {
+    if (!studentToDelete) return;
+    
+    deleteDynamicFormDataAPI(studentToDelete._id)
       .then(() => {
-        toast.success("Student updated successfully");
-        setIsEditDialogOpen(false);
+        toast.success("Student deleted successfully");
+        setIsDeleteDialogOpen(false);
+        setStudentToDelete(null);
         fetchPassOutStudents(); // Refresh data
       })
       .catch((err) => {
-        console.error("Error updating student:", err);
-        toast.error(err?.response?.data?.message || "Failed to update student");
+        console.error("Error deleting student:", err);
+        toast.error(err?.response?.data?.message || "Failed to delete student");
       });
   };
 
@@ -193,18 +166,35 @@ export default function PassOutStudents() {
     {
       accessorKey: "registrationNumber",
       header: "Registration No",
-      cell: ({ row }) => (
-        <div className="font-mono text-sm">
-          {getFieldValue(row.original.fieldsData, "registrationNumber")}
-        </div>
-      ),
+      cell: ({ row }) => {
+        // Try multiple possible field names for registration number
+        let regNumber = getFieldValue(row.original.fieldsData, "registrationNumber") || 
+                        getFieldValue(row.original.fieldsData, "registrationNo") ||
+                        getFieldValue(row.original.fieldsData, "regNo");
+        
+        return (
+          <div className="font-mono text-sm">
+            {regNumber}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "courseName",
       header: "Course",
-      cell: ({ row }) => (
-        <div>{getFieldValue(row.original.fieldsData, "courseName")}</div>
-      ),
+      cell: ({ row }) => {
+        // Try multiple possible field names for course
+        let courseName = getFieldValue(row.original.fieldsData, "selectedCourse") || 
+                         getFieldValue(row.original.fieldsData, "courseName") ||
+                         getFieldValue(row.original.fieldsData, "course");
+        
+        // If still no course found, log for debugging
+        if (!courseName || courseName === "N/A") {
+          console.log("🔍 Course fields for debugging:", row.original.fieldsData.map(f => ({ name: f.name, value: f.value })));
+        }
+        
+        return <div>{courseName}</div>;
+      },
     },
     {
       accessorKey: "completionDate",
@@ -216,16 +206,25 @@ export default function PassOutStudents() {
     {
       accessorKey: "studentEmail",
       header: "Email",
-      cell: ({ row }) => (
-        <div className="text-sm">{getFieldValue(row.original.fieldsData, "studentEmail")}</div>
-      ),
+      cell: ({ row }) => {
+        // Try multiple possible field names for email
+        let email = getFieldValue(row.original.fieldsData, "studentEmail") || 
+                    getFieldValue(row.original.fieldsData, "email");
+        
+        return <div className="text-sm">{email}</div>;
+      },
     },
     {
       accessorKey: "phoneNumber",
       header: "Phone",
-      cell: ({ row }) => (
-        <div>{getFieldValue(row.original.fieldsData, "phoneNumber")}</div>
-      ),
+      cell: ({ row }) => {
+        // Try multiple possible field names for phone
+        let phone = getFieldValue(row.original.fieldsData, "phoneNumber") || 
+                    getFieldValue(row.original.fieldsData, "phone") ||
+                    getFieldValue(row.original.fieldsData, "contactNumber");
+        
+        return <div>{phone}</div>;
+      },
     },
     {
       accessorKey: "status",
@@ -245,16 +244,12 @@ export default function PassOutStudents() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleEdit(row.original)}
-            title="Edit Student"
-          >
-            <PencilLine className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(row.original)}
-            className="text-red-600 hover:text-red-800"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDelete(row.original);
+            }}
+            className="text-red-600 hover:text-red-800 hover:bg-red-50"
             title="Delete Student"
           >
             <Trash2 className="h-4 w-4" />
@@ -367,42 +362,59 @@ export default function PassOutStudents() {
         </Table>
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Pass Out Student</DialogTitle>
-            <DialogDescription>
-              Update student information below.
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-red-600">
+              Delete Student
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-600 mt-2">
+              This action cannot be undone. The student record will be permanently deleted from the system.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {selectedStudent?.fieldsData.map((field) => (
-              <div key={field.name} className="space-y-2">
-                <label className="text-sm font-medium capitalize">
-                  {field.name.replace(/([A-Z])/g, ' $1').trim()}
-                </label>
-                <Input
-                  type={field.name.includes('email') ? 'email' : 
-                        field.name.includes('phone') ? 'tel' : 
-                        field.name.includes('date') ? 'date' : 'text'}
-                  value={editFormData[field.name] || ''}
-                  onChange={(e) => setEditFormData(prev => ({
-                    ...prev,
-                    [field.name]: e.target.value
-                  }))}
-                />
+          {studentToDelete && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="text-center">
+                <p className="font-semibold text-gray-900">
+                  {getFieldValue(studentToDelete.fieldsData, "studentName")}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Registration No: {getFieldValue(studentToDelete.fieldsData, "registrationNumber") || 
+                                   getFieldValue(studentToDelete.fieldsData, "registrationNo") ||
+                                   getFieldValue(studentToDelete.fieldsData, "regNo")}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Course: {getFieldValue(studentToDelete.fieldsData, "selectedCourse") || 
+                           getFieldValue(studentToDelete.fieldsData, "courseName") ||
+                           getFieldValue(studentToDelete.fieldsData, "course")}
+                </p>
               </div>
-            ))}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            </div>
+          )}
+          
+          <DialogFooter className="mt-6 flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setStudentToDelete(null);
+              }}
+              className="flex-1"
+            >
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit}>
-              Save Changes
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              className="flex-1 bg-red-600 hover:bg-red-700 focus:ring-red-500"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Yes, Delete Student
             </Button>
           </DialogFooter>
         </DialogContent>

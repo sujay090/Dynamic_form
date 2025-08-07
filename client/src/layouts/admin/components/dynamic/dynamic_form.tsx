@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
 import { getDynamicFormByTypeAPI } from "@/API/services/superAdminService";
-import { addStudentAPI, updateDynamicFormDataAPI } from "@/API/services/studentService";
+import { addStudentAPI, updateDynamicFormDataAPI, getDynamicFormDataAPI } from "@/API/services/studentService";
 import { getAllCourseCategoryAPI } from "@/API/services/courseService";
 import { generateZodSchema } from "@/schemas/dynamicFormSchema";
 import { Button } from "@/components/ui/button";
@@ -58,31 +58,115 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ formType }) => {
         // If this is course form, fetch course categories and update category field options
         if (formType === 'course') {
           try {
+            console.log('🏷️ Fetching course categories for dynamic form...');
             const categoriesRes = await getAllCourseCategoryAPI();
-            const categories = categoriesRes?.data || [];
+            console.log('🏷️ Course categories API response:', categoriesRes.data);
+            
+            // The getAllCourseCategoryAPI returns {success, statusCode, message, data} format
+            // where data is the array of {value: _id, label: name} objects
+            const categories = categoriesRes.data?.data || [];
             setCourseCategories(categories);
+            console.log('🏷️ Parsed categories:', categories);
             
             // Update the category field with dynamic options
             const updatedFields = fields.map((field: any) => {
               if (field.name === 'category' && field.type === 'select') {
+                console.log('🏷️ Updating category field with options:', categories);
                 return {
                   ...field,
-                  options: categories.map((cat: any) => ({
-                    value: cat._id,
-                    label: cat.name
-                  }))
+                  options: Array.isArray(categories) ? categories.map((cat: any) => ({
+                    value: cat.value, // This is the ObjectId
+                    label: cat.label  // This is the category name
+                  })) : []
                 };
               }
               return field;
             });
             
+            console.log('✅ Updated fields with categories:', updatedFields);
+            setFormFields(updatedFields);
+            
+            // Set default value for isActive field in course forms (when not in edit mode)
+            if (!isEditMode) {
+              console.log('🔧 Setting default isActive to true for new course');
+              setValue('isActive', true); // Set as boolean, not string
+            }
+          } catch (error) {
+            console.error('❌ Error fetching course categories:', error);
+            toast.error('Failed to load course categories');
+            setFormFields(fields); // fallback to original fields
+            
+            // Set default value for isActive field even on error fallback
+            if (!isEditMode) {
+              console.log('🔧 Setting default isActive to true for new course (fallback)');
+              setValue('isActive', true); // Set as boolean, not string
+            }
+          }
+        } else if (formType === 'student') {
+          // If this is student form, fetch courses from database and update selectedCourse field options
+          try {
+            console.log('🎓 Fetching courses for student form...');
+            const coursesRes = await getDynamicFormDataAPI("course");
+            console.log('🎓 Courses API response:', coursesRes.data);
+            
+            let courseOptions: Array<{value: string, label: string}> = [];
+            
+            // Check if we have dynamic courses in database
+            if (coursesRes && coursesRes.data && coursesRes.data.data && Array.isArray(coursesRes.data.data) && coursesRes.data.data.length > 0) {
+              console.log('✅ Found dynamic courses, using them...');
+              courseOptions = coursesRes.data.data.map((courseData: any) => {
+                // Extract course name from fieldsData structure
+                const getFieldValue = (fieldsData: Array<{name: string; value: any}>, fieldName: string) => {
+                  // Check if fieldsData has the nested structure
+                  const fieldsDataField = fieldsData.find((f: any) => f.name === 'fieldsData');
+                  
+                  if (fieldsDataField && Array.isArray(fieldsDataField.value)) {
+                    // If it's the nested structure, look in the value array
+                    const field = fieldsDataField.value.find((f: any) => f.name === fieldName);
+                    return field ? field.value : "";
+                  } else {
+                    // If it's the direct structure, look directly
+                    const field = fieldsData.find((f: any) => f.name === fieldName);
+                    return field ? field.value : "";
+                  }
+                };
+                
+                const courseName = getFieldValue(courseData.fieldsData, "courseName") || "Unnamed Course";
+                return {
+                  value: courseName,
+                  label: courseName
+                };
+              });
+              console.log('✅ Using dynamic course options:', courseOptions);
+            }
+            
+            // Update the selectedCourse field with dynamic options
+            const updatedFields = fields.map((field: any) => {
+              if (field.name === 'selectedCourse' && field.type === 'select') {
+                console.log('🎓 Updating selectedCourse field with options:', courseOptions);
+                return {
+                  ...field,
+                  options: courseOptions
+                };
+              }
+              return field;
+            });
+            
+            console.log('✅ Updated student fields with courses:', updatedFields);
             setFormFields(updatedFields);
           } catch (error) {
-            console.error('Error fetching course categories:', error);
+            console.error('❌ Error fetching courses:', error);
+            toast.error('Failed to load courses');
             setFormFields(fields); // fallback to original fields
           }
         } else {
           setFormFields(fields);
+          
+          // Set default value for isActive field for course forms
+          if (formType === 'course' && !isEditMode) {
+            console.log('🔧 Setting default isActive to true for new course (general case)');
+            setValue('isActive', true); // Set as boolean, not string
+          }
         }
         
         // If in edit mode, pre-fill form with URL parameter data
@@ -266,6 +350,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ formType }) => {
         );
 
       case "select":
+        console.log('🏷️ Rendering select field:', field.name, 'options:', field.options);
         return (
           <div key={field.name} className="flex flex-col gap-2">
             <Label htmlFor={field.name}>{field.label}</Label>
@@ -276,18 +361,21 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ formType }) => {
                 <SearchSelect
                   width="100%"
                   data={field.options?.map((opt: any) => ({
-                    label: opt.value,
-                    value: opt.value,
+                    label: opt.label || opt.value,
+                    value: opt.value || opt.label,
                   })) || []}
                   title={field.label}
                   notFound="Not Found"
                   value={controllerField.value}
                   setValue={controllerField.onChange}
-                  placeholder={field.placeholder}
+                  placeholder={field.placeholder || `Select ${field.label}`}
                   className={errorForField ? "border-red-500 focus:ring-red-500" : ""}
                 />
               )}
             />
+            {errorForField && (
+              <p className="text-red-500 text-sm">{errorForField.message as string}</p>
+            )}
           </div>
         );
 
@@ -300,8 +388,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ formType }) => {
               render={({ field: controllerField }) => (
                 <Checkbox
                   id={field.name}
-                  checked={!!controllerField.value}
-                  onCheckedChange={controllerField.onChange}
+                  checked={controllerField.value === true || controllerField.value === 'true'}
+                  onCheckedChange={(checked) => controllerField.onChange(checked ? 'true' : 'false')}
                 />
               )}
             />

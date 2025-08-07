@@ -51,11 +51,14 @@ function CourseForm() {
   useEffect(() => {
     getAllCourseCategoryAPI()
       .then((res) => {
-        setCategories(res.data.data);
-        // console.log(res.data.data);
+        console.log("Course categories API response:", res.data);
+        // Fix: API returns data directly, not nested in data.data
+        setCategories(res.data.data || res.data);
+        console.log("Course categories loaded:", res.data.data || res.data);
       })
       .catch((err) => {
-        console.error("API error:", err);
+        console.error("Course categories API error:", err);
+        toast.error("Failed to load course categories");
       });
   }, []);
 
