@@ -442,7 +442,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ formType }) => {
   }
 
   return (
-    <div className="w-full flex items-start justify-center">
+    <div className="w-full mt-5  flex items-start justify-center">
       <Card className="dynamic-form-card card-container w-full max-w-4xl p-6 md:p-8 rounded-2xl shadow-lg bg-white mx-auto">
         <CardHeader className="font-bold">
           <div className="w-full flex justify-between items-center">

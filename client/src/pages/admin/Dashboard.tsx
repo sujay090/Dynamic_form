@@ -295,12 +295,9 @@ function Dashboard() {
                           <div className="font-medium text-sm">
                             {getFieldValue(course.fieldsData, "courseName")}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {getFieldValue(course.fieldsData, "category")} • ₹{getFieldValue(course.fieldsData, "fees")}
-                          </div>
                         </div>
-                        <Badge variant={isActive === 'true' ? "default" : "secondary"} className="text-xs">
-                          {isActive === 'true' ? "Active" : "Inactive"}
+                        <Badge variant={isActive === true ? "default" : "secondary"} className="text-xs">
+                          {isActive === true ? "Active" : "Inactive"}
                         </Badge>
                       </div>
                     );

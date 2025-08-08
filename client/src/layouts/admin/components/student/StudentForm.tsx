@@ -124,7 +124,7 @@ function StudentForm() {
     <div className="w-full h-full flex justify-center items-start">
       <Card className="w-full p-4 max-w-7xl gap-y-3">
         <CardHeader className="font-bold  h-[36px] ">
-          <div className="w-full h-full  flex justify-between items-center">
+          <div className="w-full flex justify-between items-center">
             <h2>Add Student</h2>
           </div>
         </CardHeader>
@@ -132,7 +132,7 @@ function StudentForm() {
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="w-full h-full flex flex-col gap-4"
+          className="w-full flex flex-col gap-4"
         >
           <div className="flex-2rounded-xl gap-y-4 gap-x-7 grid grid-cols-1 lg:grid-cols-2">
             <div className="gap-2 flex flex-col  ">
