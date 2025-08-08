@@ -50,9 +50,11 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
-import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "@/store";
+import { Link, useNavigate } from "react-router-dom";
+import { logoutAdmin } from "@/reducer/auth";
+import { AuthStorage } from "@/utils/authStorage";
 
 // This is sample data.
 
@@ -205,7 +207,20 @@ type PageProps = {
 
 export default function Page({ children }: PageProps) {
   const user = useSelector((state: RootState) => state.auth.user);
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const [selectedSection, setSelectedSection] = React.useState<string>("");
+
+  const handleAdminLogout = () => {
+    // Clear admin session data
+    AuthStorage.admin.clear();
+    
+    // Update Redux state
+    dispatch(logoutAdmin());
+    
+    // Redirect to admin login
+    navigate("/login");
+  };
 
   // Render DynamicForm for add actions
   let formToShow: string | null = null;
@@ -349,7 +364,7 @@ export default function Page({ children }: PageProps) {
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleAdminLogout}>
                     <LogOut />
                     Log out
                   </DropdownMenuItem>

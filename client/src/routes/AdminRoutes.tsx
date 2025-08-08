@@ -21,8 +21,10 @@ const PassOutStudents = lazy(() => import("@/pages/admin/student/PassOutStudents
 // );
 
 export const AdminRoutes = [
-  //course
+  //dashboard  
   <Route index element={<Dashboard />} />,
+  <Route path="dashboard" element={<Dashboard />} />,
+  //course
   <Route path="courses" element={<DynamicCourseList />} />,
   <Route path="courses/:id" element={<CourseView />} />,
   <Route path="courses/add" element={<DynamicForm formType="course" />} />, 

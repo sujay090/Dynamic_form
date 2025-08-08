@@ -165,19 +165,6 @@ export const defaultStudentFields: FieldConfig[] = [
     inputType: 'date'
   },
   {
-    id: 'registrationYear',
-    name: 'registrationYear',
-    label: 'Registration Year',
-    description: 'Year of registration dropdown',
-    enabled: true,
-    position: 0,
-    category: 'details',
-    iconName: 'Calendar',
-    inputType: 'select',
-    options: [], // Will be populated dynamically with current and previous years
-    searchable: true
-  },
-  {
     id: 'admissionDate',
     name: 'admissionDate',
     label: 'Select Admission Date',

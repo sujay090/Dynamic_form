@@ -2,7 +2,8 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import axios from "axios"
-import { login } from "@/reducer/auth"
+import { loginSuperAdmin } from "@/reducer/auth"
+import { AuthStorage } from "@/utils/authStorage"
 import type { AppDispatch } from "@/store"
 
 import { Button } from "@/components/ui/button"
@@ -35,26 +36,23 @@ export function SuperAdminLogin() {
         { email, password }
       )
 
-      // Store token and user data
-      localStorage.setItem("token", res.data.token)
-      
-      // Create user data object for super admin
+      const token = res.data.data?.accessToken || res.data.token;
       const userData = {
-        id: res.data.user?.id || 'super-admin',
-        name: res.data.user?.name || 'Super Admin',
+        id: res.data.data?.user?._id || res.data.user?.id || 'super-admin',
+        name: res.data.data?.user?.name || res.data.user?.name || 'Super Admin',
         email: email,
-        avatar: res.data.user?.avatar || '',
         role: 'super-admin'
       }
-      
-      localStorage.setItem("userData", JSON.stringify(userData))
-      
-      // Update Redux state
-      dispatch(login({
-        isAuthenticated: true,
+
+      // Store SuperAdmin session data separately
+      AuthStorage.superAdmin.setToken(token);
+      AuthStorage.superAdmin.setUserData(userData);
+
+      // Update Redux state for SuperAdmin
+      dispatch(loginSuperAdmin({
         user: userData,
-        role: 'super-admin'
-      }))
+        token: token
+      }));
 
       navigate("/admin/super-admin")
     } catch (err: unknown) {

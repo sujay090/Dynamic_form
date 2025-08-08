@@ -3,7 +3,7 @@ import Home from "./pages/Home";
 import type { AppDispatch } from "./store";
 import { useDispatch } from "react-redux";
 import { Suspense, useEffect, useState } from "react";
-import { login, logout } from "./reducer/auth";
+import { restoreAuthSessions } from "./utils/sessionPersistence";
 import Login from "./pages/auth/Login";
 import { SuperAdminLogin } from "./pages/auth/superAdmin";
 import LoginRP from "./routeProtectors/LoginRP";
@@ -23,21 +23,27 @@ function App() {
     // Add preload class to prevent animations during load
     document.body.classList.add('preload');
     
-    const userData = localStorage.getItem("userData");
-
-    if (userData) {
-      const user = JSON.parse(userData);
-      dispatch(
-        login({
-          isAuthenticated: true,
-          user: user,
-          role: user.role,
-        })
-      );
-    } else {
-      // Reset Redux state when no userData in localStorage
-      dispatch(logout());
+    // Clear session storage if it contains incompatible state
+    try {
+      const persistedState = sessionStorage.getItem('persist:root');
+      if (persistedState) {
+        const parsed = JSON.parse(persistedState);
+        if (parsed.auth) {
+          const authState = JSON.parse(parsed.auth);
+          // If auth state doesn't have new structure, clear it
+          if (!authState.admin || !authState.superAdmin) {
+            console.log('Clearing incompatible auth state');
+            sessionStorage.removeItem('persist:root');
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Clearing corrupted session storage');
+      sessionStorage.clear();
     }
+    
+    // Restore both admin and superadmin sessions on app start
+    restoreAuthSessions(dispatch);
     
     setLoding(false);
     

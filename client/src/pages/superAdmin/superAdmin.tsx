@@ -20,7 +20,7 @@ import { getDynamicFormDataAPI } from "@/API/services/studentService"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { toast } from "sonner"
+import { toast, Toaster } from "sonner"
 import { Save, RotateCcw, User, GraduationCap, MapPin, Calendar, UserCheck, Building, BookOpen, Plus, Edit3 } from "lucide-react"
 // Import extracted components
 import { 
@@ -516,7 +516,10 @@ const SuperAdminPanel = () => {
     }))
 
     setCurrentFields(updatedFields)
-    toast.success(`Moved "${draggedField.label}" to new position`)
+    toast.success(`Moved "${draggedField.label}" to new position`, {
+      duration: 2000,
+      position: 'top-right'
+    })
   }
 
   const toggleField = (fieldId: string) => {
@@ -533,6 +536,9 @@ const SuperAdminPanel = () => {
     console.log('💾 Starting saveConfiguration process...')
     console.log('🌐 API Base URL:', import.meta.env.VITE_API_BASE_URL)
     dispatch(setLoading(true))
+    
+    // Show loading toast
+    toast.loading('Saving configuration...', { id: 'save-config' })
     
     try {
       const currentFields = getCurrentFields()
@@ -576,16 +582,27 @@ const SuperAdminPanel = () => {
         console.log('✅ Create response:', response)
       }
       
+      // Dismiss loading toast
+      toast.dismiss('save-config')
+      
       if (response.success) {
         const action = existingConfig ? 'updated' : 'created'
-        toast.success(`${activeForm.charAt(0).toUpperCase() + activeForm.slice(1)} form configuration ${action} successfully! ${enabledFields.length} fields enabled.`)
+        toast.success(`${activeForm.charAt(0).toUpperCase() + activeForm.slice(1)} form configuration ${action} successfully! ${enabledFields.length} fields enabled.`, {
+          duration: 4000,
+          position: 'top-right'
+        })
         console.log(`✅ Successfully ${action} ${activeForm} configuration`)
       } else {
         throw new Error(response.message || 'Failed to save configuration')
       }
     } catch (error: any) {
       console.error('❌ Error saving configuration:', error)
-      toast.error(error.message || 'Failed to save configuration. Please try again.')
+      // Dismiss loading toast
+      toast.dismiss('save-config')
+      toast.error(error.message || 'Failed to save configuration. Please try again.', {
+        duration: 5000,
+        position: 'top-right'
+      })
       dispatch(setError('Failed to save configuration'))
     } finally {
       dispatch(setLoading(false))
@@ -602,13 +619,19 @@ const SuperAdminPanel = () => {
       position: index + 1 // Reset positions to original order
     }))
     setCurrentFields(updatedFields)
-    toast.info(`${activeForm.charAt(0).toUpperCase() + activeForm.slice(1)} form configuration reset to default settings.`)
+    toast.success(`${activeForm.charAt(0).toUpperCase() + activeForm.slice(1)} form configuration reset to default settings.`, {
+      duration: 3000,
+      position: 'top-right'
+    })
   }
 
   // Custom form creation functions
   const createNewForm = () => {
     if (!newFormName.trim()) {
-      toast.error('Please enter a form name')
+      toast.error('Please enter a form name', {
+        duration: 3000,
+        position: 'top-right'
+      })
       return
     }
 
@@ -626,12 +649,18 @@ const SuperAdminPanel = () => {
     setIsCreatingCustomForm(true)
     setNewFormName('')
     setShowAddForm(false)
-    toast.success(`Created new form: ${newFormName}`)
+    toast.success(`Created new form: ${newFormName}`, {
+      duration: 4000,
+      position: 'top-right'
+    })
   }
 
   const addFieldToForm = () => {
     if (!newField.name.trim() || !newField.label.trim()) {
-      toast.error('Please fill in field name and label')
+      toast.error('Please fill in field name and label', {
+        duration: 3000,
+        position: 'top-right'
+      })
       return
     }
 
@@ -670,7 +699,10 @@ const SuperAdminPanel = () => {
       searchable: false
     })
     setShowAddField(false)
-    toast.success(`Added field: ${newField.label}`)
+    toast.success(`Added field: ${newField.label}`, {
+      duration: 3000,
+      position: 'top-right'
+    })
   }
 
   // Show loading spinner when initially loading data
@@ -727,7 +759,8 @@ const SuperAdminPanel = () => {
   }, {} as Record<string, FieldConfig[]>)
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex relative">
+    <>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex relative overflow-hidden">
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -748,7 +781,7 @@ const SuperAdminPanel = () => {
       />
 
       {/* Main Content */}
-      <div className={`flex-1 p-6 transition-all duration-300 ${isDesktop ? '' : 'w-full'}`}>
+      <div className={`flex-1 p-6 transition-all duration-300 overflow-y-auto h-screen ${isDesktop ? '' : 'w-full'}`}>
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Header */}
           <FormHeader
@@ -860,6 +893,8 @@ const SuperAdminPanel = () => {
         </div>
       </div>
     </div>
+    <Toaster position="top-right" />
+    </>
   )
 }
 

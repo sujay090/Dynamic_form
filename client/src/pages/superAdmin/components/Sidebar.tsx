@@ -8,11 +8,17 @@ import {
   Plus,
   RotateCcw,
   Save,
-  Menu
+  Menu,
+  LogOut
 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useDispatch } from "react-redux"
+import { useNavigate } from "react-router-dom"
+import { logoutSuperAdmin } from "@/reducer/auth"
+import { AuthStorage } from "@/utils/authStorage"
+import type { AppDispatch } from "@/store"
 import type { FormType } from '../types'
 
 interface SidebarProps {
@@ -67,6 +73,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   saveConfiguration,
   loading
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+
+  const handleSuperAdminLogout = () => {
+    // Clear SuperAdmin session data
+    AuthStorage.superAdmin.clear();
+    
+    // Update Redux state
+    dispatch(logoutSuperAdmin());
+    
+    // Redirect to SuperAdmin login
+    navigate("/super-admin/login");
+  };
   const formOptions = [
     { 
       key: 'student' as FormType, 
@@ -108,11 +127,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar - Always visible on desktop, toggleable on mobile */}
       <div className={`${
         isDesktop 
-          ? 'sticky top-0 h-screen w-80 flex-shrink-0' // Desktop: sticky sidebar that sticks to top
+          ? 'sticky top-0 h-screen w-80 flex-shrink-0 overflow-hidden' // Desktop: sticky sidebar that sticks to top with proper overflow handling
           : `fixed left-0 top-0 h-full z-50 transform transition-transform duration-300 ease-out w-80 shadow-2xl ${
               sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             }` // Mobile: slide overlay
-      } bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}>
+      } bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col`}>
         
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary/5 to-transparent">
@@ -265,7 +284,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 mb-3">
             <Button 
               variant="outline" 
               size="sm" 
@@ -285,6 +304,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {loading ? 'Saving...' : 'Save'}
             </Button>
           </div>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={handleSuperAdminLogout}
+            className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
         </div>
       </div>
 

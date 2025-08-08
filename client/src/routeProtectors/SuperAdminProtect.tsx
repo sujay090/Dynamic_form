@@ -10,20 +10,20 @@ function SuperAdminProtect({
   children: React.ReactNode;
 }) {
   const navigate = useNavigate();
-  const { isAuthenticated, role } = useSelector(
+  const { superAdmin } = useSelector(
     (state: RootState) => state.auth
   );
 
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!superAdmin.isAuthenticated) {
       navigate("/super-admin/login", { replace: true }); // Not logged in, redirect to super admin login
-    } else if (role !== "super-admin") {
+    } else if (superAdmin.user?.role !== "super-admin") {
       navigate("/", { replace: true }); // Wrong role, redirect to home
     } else {
       setLoading(false); // Correct role (super-admin)
     }
-  }, [isAuthenticated, role, navigate]);
+  }, [superAdmin.isAuthenticated, superAdmin.user?.role, navigate]);
 
   return <>{loading ? <PageLoder /> : children}</>;
 }

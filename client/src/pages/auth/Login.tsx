@@ -11,8 +11,10 @@ import LoginIMG from "../../assets/images/loginPageIMG.png";
 import { loginAPI } from "@/API/services/authService";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store";
-import { login } from "@/reducer/auth";
+import { loginAdmin } from "@/reducer/auth";
+import { AuthStorage } from "@/utils/authStorage";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 const gradientAnimation = keyframes`
   0% {
     background-position: 0% 50%;
@@ -40,6 +42,7 @@ const GradientDiv = styled.div`
 
 function Login() {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -54,29 +57,57 @@ function Login() {
     },
   });
   const onSubmit = (data: LoginDataType) => {
+    console.log("🔐 Admin Login Attempt:", data);
     loginAPI(data)
       .then((res) => {
-        // console.log(res.data);
+        console.log("✅ Login API Response:", res.data);
         if (res.status === 200) {
+          const token = res.data.data.accessToken;
+          const userData = {
+            id: res.data.data.user._id,
+            name: res.data.data.user.name,
+            email: res.data.data.user.email,
+            role: res.data.data.user.role
+          };
+
+          console.log("👤 User Data:", userData);
+
+          // Store admin session data separately
+          AuthStorage.admin.setToken(token);
+          AuthStorage.admin.setUserData(userData);
+          
+          // Also set legacy storage for backward compatibility
+          localStorage.setItem("token", token);
+          localStorage.setItem("userData", JSON.stringify(userData));
+
+          // Update Redux state for admin
+          dispatch(loginAdmin({
+            user: userData,
+            token: token
+          }));
+
           toast.success("Login successfully");
-          dispatch(
-            login({
-              isAuthenticated: true,
-              user: res.data.data.user,
-              role: res.data.data.user.role,
-            })
-          );
-          localStorage.setItem("userData", JSON.stringify(res.data.data.user));
-          localStorage.setItem("token", res.data.data.accessToken);
+          
+          console.log("🚀 Navigating to dashboard for role:", userData.role);
+          // Navigate based on role
+          if (userData.role === "admin") {
+            navigate("/admin/dashboard");
+          } else if (userData.role === "branch") {
+            navigate("/admin/dashboard"); // या कोई specific branch route
+          } else {
+            navigate("/admin");
+          }
         }
       })
       .catch((err) => {
-        console.log(err);
-        if (err.response.status === 401) {
+        console.error("❌ Login Error:", err);
+        if (err.response?.status === 401) {
           toast.error("Invalid email or password");
           reset();
-        } else if (err.response.status === 500) {
+        } else if (err.response?.status === 500) {
           toast.error("Internal server error");
+        } else {
+          toast.error("Login failed. Please try again.");
         }
       });
   };

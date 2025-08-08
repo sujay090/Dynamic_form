@@ -2,10 +2,18 @@ import { z } from "zod";
 import type { ZodTypeAny } from "zod";
 
 export const generateZodSchema = (fields: any[]): z.ZodObject<any> => {
+  console.log("🔧 Generating Zod schema for fields:", fields);
   const schemaShape: Record<string, ZodTypeAny> = {};
 
   fields.forEach((field) => {
-    if (!field.isActive) return; // Skip inactive fields
+    // Check both `enabled` (from constants) and `isActive` (from database)
+    const isFieldActive = field.enabled !== false && field.isActive !== false;
+    console.log(`🔍 Field ${field.name}: enabled=${field.enabled}, isActive=${field.isActive}, active=${isFieldActive}`);
+    
+    if (!isFieldActive) {
+      console.log(`⏭️ Skipping inactive field: ${field.name}`);
+      return; // Skip inactive fields
+    }
 
     let zodField: ZodTypeAny;
 
@@ -32,7 +40,14 @@ export const generateZodSchema = (fields: any[]): z.ZodObject<any> => {
         break;
 
       case "checkbox":
-        zodField = z.boolean();
+        // Handle checkbox values - they can come as string "true"/"false" or boolean
+        zodField = z.union([z.boolean(), z.string()]).transform((val) => {
+          if (typeof val === 'boolean') return val;
+          if (typeof val === 'string') {
+            return val === 'true' || val === 'on' || val === '1';
+          }
+          return Boolean(val);
+        });
         break;
 
       case "select":
@@ -60,9 +75,13 @@ export const generateZodSchema = (fields: any[]): z.ZodObject<any> => {
 
     // Add required check
     if (field.required !== false) {
+      console.log(`✅ Adding field to schema: ${field.name} (${field.type})`);
       schemaShape[field.name] = zodField;
+    } else {
+      console.log(`ℹ️ Field ${field.name} is optional, skipping validation`);
     }
   });
 
+  console.log("📋 Final schema shape:", Object.keys(schemaShape));
   return z.object(schemaShape);
 };

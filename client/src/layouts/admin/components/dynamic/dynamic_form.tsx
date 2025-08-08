@@ -42,6 +42,11 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ formType }) => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(generateZodSchema(formFields)),
+    defaultValues: {
+      isActive: false,
+      isRegistered: false, 
+      completedCourse: false
+    }
   });
 
   // Load form fields and pre-fill data if in edit mode
@@ -385,11 +390,15 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ formType }) => {
             <Controller
               control={control}
               name={field.name}
+              defaultValue={false} // Set proper boolean default
               render={({ field: controllerField }) => (
                 <Checkbox
                   id={field.name}
-                  checked={controllerField.value === true || controllerField.value === 'true'}
-                  onCheckedChange={(checked) => controllerField.onChange(checked ? 'true' : 'false')}
+                  checked={Boolean(controllerField.value)}
+                  onCheckedChange={(checked) => {
+                    console.log(`🔲 Checkbox ${field.name} changed to:`, checked);
+                    controllerField.onChange(Boolean(checked)); // Store as boolean
+                  }}
                 />
               )}
             />
