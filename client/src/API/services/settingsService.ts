@@ -124,13 +124,13 @@ export interface BranchSettings {
 }
 
 class SettingsService {
-  // Get settings for a specific branch
-  async getBranchSettings(branchId: string): Promise<BranchSettings> {
-    const response = await api.get(`${ENDPOINTS.SETTINGS}/${branchId}`);
+  // Get global settings
+  async getBranchSettings(branchId?: string): Promise<BranchSettings> {
+    const response = await api.get(ENDPOINTS.SETTINGS);
     return response.data.data;
   }
 
-  // Update header settings for a branch
+  // Update header settings
   async updateHeaderSettings(
     branchId: string, 
     headerData: HeaderSettings, 
@@ -158,7 +158,7 @@ class SettingsService {
     }
 
     const response = await api.patch(
-      `${ENDPOINTS.SETTINGS}/${branchId}/header`, 
+      `${ENDPOINTS.SETTINGS}/header`, 
       formData,
       {
         headers: {
@@ -169,7 +169,7 @@ class SettingsService {
     return response.data.data;
   }
 
-  // Update body settings for a branch
+  // Update body settings
   async updateBodySettings(
     branchId: string, 
     bodyData: BodySettings, 
@@ -207,7 +207,7 @@ class SettingsService {
     }
 
     const response = await api.patch(
-      `${ENDPOINTS.SETTINGS}/${branchId}/body`, 
+      `${ENDPOINTS.SETTINGS}/body`, 
       formData,
       {
         headers: {
@@ -218,7 +218,7 @@ class SettingsService {
     return response.data.data;
   }
 
-  // Update footer settings for a branch
+  // Update footer settings
   async updateFooterSettings(
     branchId: string, 
     footerData: FooterSettings, 
@@ -249,7 +249,7 @@ class SettingsService {
     }
 
     const response = await api.patch(
-      `${ENDPOINTS.SETTINGS}/${branchId}/footer`, 
+      `${ENDPOINTS.SETTINGS}/footer`, 
       formData,
       {
         headers: {
@@ -260,19 +260,19 @@ class SettingsService {
     return response.data.data;
   }
 
-  // Update theme settings for a branch
+  // Update theme settings
   async updateThemeSettings(
     branchId: string, 
     themeData: ThemeSettings
   ): Promise<BranchSettings> {
     const response = await api.patch(
-      `${ENDPOINTS.SETTINGS}/${branchId}/theme`, 
+      `${ENDPOINTS.SETTINGS}/theme`, 
       themeData
     );
     return response.data.data;
   }
 
-  // Update SEO settings for a branch
+  // Update SEO settings (placeholder - not implemented in backend yet)
   async updateSEOSettings(
     branchId: string, 
     seoData: SEOSettings, 
@@ -289,7 +289,7 @@ class SettingsService {
     }
 
     const response = await api.patch(
-      `${ENDPOINTS.SETTINGS}/${branchId}/seo`, 
+      `${ENDPOINTS.SETTINGS}/seo`, 
       formData,
       {
         headers: {
@@ -300,15 +300,15 @@ class SettingsService {
     return response.data.data;
   }
 
-  // Get all branch settings (for admin overview)
+  // Get all settings (for admin overview)
   async getAllBranchSettings(): Promise<BranchSettings[]> {
-    const response = await api.get(ENDPOINTS.SETTINGS);
+    const response = await api.get(`${ENDPOINTS.SETTINGS}/all`);
     return response.data.data;
   }
 
-  // Delete settings for a branch
-  async deleteSettings(branchId: string): Promise<BranchSettings> {
-    const response = await api.delete(`${ENDPOINTS.SETTINGS}/${branchId}`);
+  // Delete settings
+  async deleteSettings(branchId?: string): Promise<BranchSettings> {
+    const response = await api.delete(ENDPOINTS.SETTINGS);
     return response.data.data;
   }
 }

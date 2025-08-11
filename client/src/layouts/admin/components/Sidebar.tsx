@@ -186,6 +186,10 @@ const data = {
         {
           title: "Footer",
           url: "/admin/settings/footer",
+        },
+        {
+          title: "Theme",
+          url: "/admin/settings/theme",
         }
       ],
     },

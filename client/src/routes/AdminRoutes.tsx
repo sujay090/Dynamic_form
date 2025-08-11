@@ -23,6 +23,7 @@ const PassOutStudents = lazy(() => import("@/pages/admin/student/PassOutStudents
 const HeaderSettings = lazy(() => import("@/pages/admin/settings/Header"));
 const FooterSettings = lazy(() => import("@/pages/admin/settings/Footer"));
 const BodySettings = lazy(() => import("@/pages/admin/settings/Body"));
+const ThemeSettings = lazy(() => import("@/pages/admin/settings/Theme"));
 
 export const AdminRoutes = [
   //dashboard  
@@ -46,4 +47,5 @@ export const AdminRoutes = [
   <Route path="settings/header" element={<HeaderSettings />} />,
   <Route path="settings/footer" element={<FooterSettings />} />,
   <Route path="settings/body" element={<BodySettings />} />,
+  <Route path="settings/theme" element={<ThemeSettings />} />,
 ]
