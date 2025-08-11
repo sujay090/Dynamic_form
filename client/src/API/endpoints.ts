@@ -13,6 +13,7 @@ const ENDPOINTS = {
   BRANCH: "/branches",
   STUDENT: "/students",
   DYNAMIC_FORMS: "/dynamic-forms",
+  SETTINGS: "/settings",
 };
 
 export default ENDPOINTS;

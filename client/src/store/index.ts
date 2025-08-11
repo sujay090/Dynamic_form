@@ -18,35 +18,6 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: "root",
   storage: storageSession,
-  version: 1, // Add version for state migration
-  migrate: (state: any) => {
-    // Handle state migration if structure changes
-    if (state && state.auth) {
-      // If auth state doesn't have the new structure, reset it
-      if (!state.auth.admin || !state.auth.superAdmin) {
-        return {
-          ...state,
-          auth: {
-            admin: {
-              isAuthenticated: false,
-              user: null,
-              token: null,
-            },
-            superAdmin: {
-              isAuthenticated: false,
-              user: null,
-              token: null,
-            },
-            currentSession: null,
-            isAuthenticated: false,
-            user: null,
-            role: null,
-          }
-        };
-      }
-    }
-    return Promise.resolve(state);
-  },
 };
 
 // 3. Wrap reducer with persistReducer

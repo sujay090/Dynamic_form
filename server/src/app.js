@@ -32,6 +32,8 @@ import adminMenuRoutes from "./routes/adminMenu.routes.js";
 import sidebarMenuRoutes from "./routes/sidebarMenu.routes.js";
 import dynamicFormRoutes from "./routes/dynamicForm.routes.js";
 import superAdminLoginRoutes from "./routes/superAdmin.routes.js";
+import settingsRoutes from "./routes/settings.routes.js";
+
 // Use routes
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/students", studentRoutes);
@@ -44,5 +46,6 @@ app.use("/api/v1/branch-menus", branchMenuRoutes);
 app.use("/api/v1/admin-menus", adminMenuRoutes);
 app.use("/api/v1/sidebar-menus", sidebarMenuRoutes);
 app.use("/api/v1/dynamic-forms", dynamicFormRoutes);
-app.use("/api/v1/super-admin",superAdminLoginRoutes);
+app.use("/api/v1/super-admin", superAdminLoginRoutes);
+app.use("/api/v1/settings", settingsRoutes);
 export { app };

@@ -101,13 +101,6 @@ function App() {
               }
             />
             
-            {/* Remove the standalone super-admin route */}
-            {/* <Route
-              path="/super-admin"
-              element={
-               <SuperAdminPanel />
-              }
-            /> */}
           </Routes>
 
         </BrowserRouter>

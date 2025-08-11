@@ -171,31 +171,22 @@ const data = {
       ],
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: Bot,
-    },
-    {
       title: "Settings",
       url: "#",
       icon: Settings2,
       items: [
         {
-          title: "General",
-          url: "#",
+          title: "Header",
+          url: "/admin/settings/header",
         },
         {
-          title: "Team",
-          url: "#",
+          title: "Body",
+          url: "/admin/settings/body",
         },
         {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
+          title: "Footer",
+          url: "/admin/settings/footer",
+        }
       ],
     },
   ],
@@ -227,7 +218,6 @@ export default function Page({ children }: PageProps) {
   if (selectedSection === "Add Students") formToShow = "student";
   if (selectedSection === "Add Branch") formToShow = "branch";
   if (selectedSection === "Add Course") formToShow = "course";
-
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">

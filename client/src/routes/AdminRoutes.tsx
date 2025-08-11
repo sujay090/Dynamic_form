@@ -19,6 +19,10 @@ const PassOutStudents = lazy(() => import("@/pages/admin/student/PassOutStudents
 // const StudentForm = lazy(
 //   () => import("@/layouts/admin/components/student/StudentForm")
 // );
+//settings
+const HeaderSettings = lazy(() => import("@/pages/admin/settings/Header"));
+const FooterSettings = lazy(() => import("@/pages/admin/settings/Footer"));
+const BodySettings = lazy(() => import("@/pages/admin/settings/Body"));
 
 export const AdminRoutes = [
   //dashboard  
@@ -38,4 +42,8 @@ export const AdminRoutes = [
   <Route path="students/add" element={<DynamicForm formType="student" />} />,
   <Route path="students/registered" element={<RegisteredStudents />} />,
   <Route path="students/passout" element={<PassOutStudents />} />,
+  //settings
+  <Route path="settings/header" element={<HeaderSettings />} />,
+  <Route path="settings/footer" element={<FooterSettings />} />,
+  <Route path="settings/body" element={<BodySettings />} />,
 ]
