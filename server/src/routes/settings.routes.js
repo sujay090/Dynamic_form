@@ -1,19 +1,23 @@
 import { Router } from "express";
 import {
-  getSettings,
-  updateHeaderSettings,
-  updateBodySettings,
-  updateFooterSettings,
-  updateThemeSettings,
-  getAllSettings,
-  deleteSettings,
+    getSettings,
+    getPublicSettings,
+    updateHeaderSettings,
+    updateBodySettings,
+    updateFooterSettings,
+    updateThemeSettings,
+    getAllSettings,
+    deleteSettings,
 } from "../controllers/settings.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// All routes require authentication
+// Public route (no authentication required)
+router.route("/public").get(getPublicSettings);
+
+// All other routes require authentication
 router.use(verifyJWT);
 
 // Get global settings
@@ -23,12 +27,8 @@ router.route("/").get(getSettings);
 router.route("/header").patch(upload.single("logo"), updateHeaderSettings);
 
 router.route("/body").patch(
-  upload.fields([
-    { name: "heroBackgrounds", maxCount: 10 }, // Changed to support multiple hero images
-    { name: "aboutImage", maxCount: 1 },
-    { name: "ctaBackground", maxCount: 1 },
-  ]), 
-  updateBodySettings
+    upload.any(), // Accept any files for more flexibility with service images
+    updateBodySettings
 );
 
 router.route("/footer").patch(upload.single("logo"), updateFooterSettings);
