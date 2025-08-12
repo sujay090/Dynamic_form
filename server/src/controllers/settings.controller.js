@@ -129,10 +129,12 @@ export const updateBodySettings = asyncHandler(async (req, res) => {
   // Handle file uploads for hero background, about image, service images, etc.
   const files = req.files || {};
   
-  // Process hero background image
-  if (files.heroBackground && files.heroBackground[0]) {
+  // Process multiple hero background images
+  if (files.heroBackgrounds && files.heroBackgrounds.length > 0) {
     bodyData.hero = bodyData.hero || {};
-    bodyData.hero.backgroundImage = `${req.protocol}://${req.get("host")}/assets/${files.heroBackground[0].filename}`;
+    bodyData.hero.backgroundImages = files.heroBackgrounds.map(file => 
+      `${req.protocol}://${req.get("host")}/assets/${file.filename}`
+    );
   }
 
   // Process about section image

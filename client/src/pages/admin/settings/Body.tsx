@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, ChevronLeft, ChevronRight, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { settingsService, type BodySettings } from "@/API/services/settingsService";
 import { useBranchSelection } from "@/hooks/useBranchSelection";
@@ -26,17 +26,17 @@ interface FeatureItem {
 
 export default function BodySettings() {
   const { selectedBranch } = useBranchSelection();
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [heroBackgroundFile, setHeroBackgroundFile] = useState<File | null>(null);
+  const [heroBackgroundFiles, setHeroBackgroundFiles] = useState<File[]>([]);
   const [aboutImageFile, setAboutImageFile] = useState<File | null>(null);
   const [ctaBackgroundFile, setCtaBackgroundFile] = useState<File | null>(null);
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   
   const [bodyData, setBodyData] = useState<BodySettings>({
     hero: {
       title: "",
       subtitle: "",
-      backgroundImage: "",
+      backgroundImages: [], // Changed from backgroundImage to backgroundImages array
       ctaButton: {
         text: "",
         url: "",
@@ -63,30 +63,16 @@ export default function BodySettings() {
     },
   });
 
-  // Load existing settings on component mount
-  useEffect(() => {
-    if (selectedBranch) {
-      loadBodySettings();
-    }
-  }, [selectedBranch]);
+  // Load existing settings on component mount - removed as no longer needed
+  // useEffect(() => {
+  //   if (selectedBranch) {
+  //     loadBodySettings();
+  //   }
+  // }, [selectedBranch]);
 
-  const loadBodySettings = async () => {
-    if (!selectedBranch) return;
-    
-    try {
-      setIsLoading(true);
-      const settings = await settingsService.getBranchSettings(selectedBranch._id);
-      
-      if (settings.body) {
-        setBodyData(settings.body);
-      }
-    } catch (error) {
-      console.error('Error loading body settings:', error);
-      toast.error('Failed to load body settings');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const loadBodySettings = async () => {
+  //   // No longer needed as we don't fetch existing settings
+  // };
 
   const handleSave = async () => {
     if (!selectedBranch) {
@@ -98,7 +84,7 @@ export default function BodySettings() {
       setIsSaving(true);
       
       const files = {
-        heroBackground: heroBackgroundFile || undefined,
+        heroBackgrounds: heroBackgroundFiles.length > 0 ? heroBackgroundFiles : undefined,
         aboutImage: aboutImageFile || undefined,
         ctaBackground: ctaBackgroundFile || undefined,
       };
@@ -108,7 +94,7 @@ export default function BodySettings() {
       toast.success('Body settings saved successfully!');
       
       // Reset file inputs
-      setHeroBackgroundFile(null);
+      setHeroBackgroundFiles([]);
       setAboutImageFile(null);
       setCtaBackgroundFile(null);
       
@@ -121,8 +107,38 @@ export default function BodySettings() {
   };
 
   const handleCancel = () => {
-    loadBodySettings(); // Reset to original values
-    setHeroBackgroundFile(null);
+    // Reset form to initial values
+    setBodyData({
+      hero: {
+        title: "",
+        subtitle: "",
+        backgroundImages: [],
+        ctaButton: {
+          text: "",
+          url: "",
+          isVisible: true,
+        },
+      },
+      about: {
+        title: "",
+        description: "",
+        image: "",
+        features: [],
+      },
+      services: {
+        title: "",
+        subtitle: "",
+        servicesList: [],
+      },
+      cta: {
+        title: "",
+        description: "",
+        buttonText: "",
+        buttonUrl: "",
+        backgroundImage: "",
+      },
+    });
+    setHeroBackgroundFiles([]);
     setAboutImageFile(null);
     setCtaBackgroundFile(null);
     toast.info('Changes cancelled');
@@ -210,16 +226,6 @@ export default function BodySettings() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -254,7 +260,7 @@ export default function BodySettings() {
           <CardHeader>
             <CardTitle>Hero Section</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="heroTitle">Hero Title</Label>
               <Input 
@@ -280,26 +286,174 @@ export default function BodySettings() {
                 }))}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="heroImage">Hero Background Image</Label>
-              <Input 
-                id="heroImage" 
-                type="file" 
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) setHeroBackgroundFile(file);
-                }}
-              />
-              {bodyData.hero?.backgroundImage && (
-                <p className="text-sm text-muted-foreground">
-                  Current: {bodyData.hero.backgroundImage}
-                </p>
+            
+            {/* Hero Background Images Carousel */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Hero Background Images (Carousel)</Label>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="heroImages" className="cursor-pointer">
+                    <Button variant="outline" size="sm" asChild>
+                      <span>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Add Images
+                      </span>
+                    </Button>
+                  </Label>
+                  <Input
+                    id="heroImages"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length > 0) {
+                        // Validate file sizes (2MB max each)
+                        const validFiles = files.filter(file => {
+                          if (file.size > 2 * 1024 * 1024) {
+                            toast.error(`File ${file.name} is too large. Max size is 2MB.`);
+                            return false;
+                          }
+                          return true;
+                        });
+                        
+                        if (validFiles.length > 0) {
+                          setHeroBackgroundFiles(prev => [...prev, ...validFiles]);
+                          toast.success(`${validFiles.length} image(s) added successfully`);
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Current Images List */}
+              {heroBackgroundFiles.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {heroBackgroundFiles.map((file, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Hero ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setHeroBackgroundFiles(prev => prev.filter((_, i) => i !== index));
+                          toast.success('Image removed');
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1 rounded">
+                        {index + 1}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
-              {heroBackgroundFile && (
-                <p className="text-sm text-green-600">
-                  New image selected: {heroBackgroundFile.name}
-                </p>
+
+              {/* Live Carousel Preview */}
+              {heroBackgroundFiles.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Live Preview (How it will look on website)</Label>
+                  <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ height: '300px' }}>
+                    <div 
+                      className="w-full h-full bg-cover bg-center bg-no-repeat flex items-center justify-center relative"
+                      style={{ 
+                        backgroundImage: `url(${URL.createObjectURL(heroBackgroundFiles[currentCarouselIndex])})` 
+                      }}
+                    >
+                      {/* Sample overlay content */}
+                      <div className="absolute inset-0 bg-black/40"></div>
+                      <div className="relative z-10 text-center text-white p-6">
+                        <h1 className="text-4xl font-bold mb-4">
+                          {bodyData.hero?.title || 'Your Hero Title'}
+                        </h1>
+                        <p className="text-lg mb-6">
+                          {bodyData.hero?.subtitle || 'Your compelling subtitle goes here'}
+                        </p>
+                        {bodyData.hero?.ctaButton?.isVisible && (
+                          <Button className="bg-white text-black hover:bg-gray-100">
+                            {bodyData.hero?.ctaButton?.text || 'Get Started'}
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {/* Carousel Navigation */}
+                      {heroBackgroundFiles.length > 1 && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white"
+                            onClick={() => setCurrentCarouselIndex(prev => 
+                              prev === 0 ? heroBackgroundFiles.length - 1 : prev - 1
+                            )}
+                          >
+                            <ChevronLeft className="h-6 w-6" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white"
+                            onClick={() => setCurrentCarouselIndex(prev => 
+                              prev === heroBackgroundFiles.length - 1 ? 0 : prev + 1
+                            )}
+                          >
+                            <ChevronRight className="h-6 w-6" />
+                          </Button>
+                          
+                          {/* Carousel Dots */}
+                          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                            {heroBackgroundFiles.map((_, index) => (
+                              <button
+                                key={index}
+                                className={`w-2 h-2 rounded-full transition-all ${
+                                  index === currentCarouselIndex ? 'bg-white' : 'bg-white/50'
+                                }`}
+                                onClick={() => setCurrentCarouselIndex(index)}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground">
+                    Preview shows how the carousel will appear on your website. 
+                    {heroBackgroundFiles.length > 1 && ' Use arrow buttons or dots to navigate between images.'}
+                  </p>
+                </div>
+              )}
+
+              {/* Existing Images Info */}
+              {bodyData.hero?.backgroundImages && bodyData.hero.backgroundImages.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Current Images on Website</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {bodyData.hero.backgroundImages.map((imageUrl, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={imageUrl}
+                          alt={`Current Hero ${index + 1}`}
+                          className="w-full h-24 object-cover rounded border"
+                        />
+                        <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1 rounded">
+                          Current {index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    These images are currently live on your website. Upload new images above to replace them.
+                  </p>
+                </div>
               )}
             </div>
             

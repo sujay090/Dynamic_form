@@ -22,7 +22,7 @@ export interface BodySettings {
   hero?: {
     title?: string;
     subtitle?: string;
-    backgroundImage?: string;
+    backgroundImages?: string[]; // Changed from backgroundImage to backgroundImages array
     ctaButton?: {
       text?: string;
       url?: string;
@@ -124,12 +124,6 @@ export interface BranchSettings {
 }
 
 class SettingsService {
-  // Get global settings
-  async getBranchSettings(branchId?: string): Promise<BranchSettings> {
-    const response = await api.get(ENDPOINTS.SETTINGS);
-    return response.data.data;
-  }
-
   // Update header settings
   async updateHeaderSettings(
     branchId: string, 
@@ -174,7 +168,7 @@ class SettingsService {
     branchId: string, 
     bodyData: BodySettings, 
     files?: {
-      heroBackground?: File;
+      heroBackgrounds?: File[]; // Changed to support multiple hero images
       aboutImage?: File;
       ctaBackground?: File;
     }
@@ -196,8 +190,10 @@ class SettingsService {
     }
     
     // Add files if provided
-    if (files?.heroBackground) {
-      formData.append("heroBackground", files.heroBackground);
+    if (files?.heroBackgrounds && files.heroBackgrounds.length > 0) {
+      files.heroBackgrounds.forEach(file => {
+        formData.append("heroBackgrounds", file);
+      });
     }
     if (files?.aboutImage) {
       formData.append("aboutImage", files.aboutImage);

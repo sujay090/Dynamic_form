@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,6 @@ interface QuickLink {
 
 export default function FooterSettings() {
   const { selectedBranch } = useBranchSelection();
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   
@@ -53,30 +52,7 @@ export default function FooterSettings() {
     },
   });
 
-  // Load existing settings on component mount
-  useEffect(() => {
-    if (selectedBranch) {
-      loadFooterSettings();
-    }
-  }, [selectedBranch]);
-
-  const loadFooterSettings = async () => {
-    if (!selectedBranch) return;
-    
-    try {
-      setIsLoading(true);
-      const settings = await settingsService.getBranchSettings(selectedBranch._id);
-      
-      if (settings.footer) {
-        setFooterData(settings.footer);
-      }
-    } catch (error) {
-      console.error('Error loading footer settings:', error);
-      toast.error('Failed to load footer settings');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Remove useEffect and loadFooterSettings as no longer needed
 
   const handleSave = async () => {
     if (!selectedBranch) {
@@ -107,7 +83,37 @@ export default function FooterSettings() {
   };
 
   const handleCancel = () => {
-    loadFooterSettings(); // Reset to original values
+    // Reset form to initial values
+    setFooterData({
+      companyInfo: {
+        name: "",
+        description: "",
+        logo: "",
+      },
+      contact: {
+        address: "",
+        phone: "",
+        email: "",
+        workingHours: "",
+      },
+      quickLinks: [
+        { title: "Privacy Policy", url: "/privacy-policy", order: 1 },
+        { title: "Terms of Service", url: "/terms-of-service", order: 2 },
+        { title: "Contact Us", url: "/contact", order: 3 },
+        { title: "About Us", url: "/about", order: 4 },
+      ],
+      socialMedia: {
+        facebook: "",
+        twitter: "",
+        instagram: "",
+        linkedin: "",
+        youtube: "",
+      },
+      copyright: {
+        text: "",
+        year: new Date().getFullYear(),
+      },
+    });
     setLogoFile(null);
     toast.info('Changes cancelled');
   };
@@ -145,16 +151,6 @@ export default function FooterSettings() {
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="text-center py-8">
           <p className="text-muted-foreground">Please select a branch to manage footer settings</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       </div>
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ interface NavigationItem {
 
 export default function HeaderSettings() {
   const { selectedBranch } = useBranchSelection();
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   
@@ -30,7 +29,7 @@ export default function HeaderSettings() {
     navigation: [
       { title: "Home", url: "/", order: 1, isActive: true },
       { title: "About", url: "/about", order: 2, isActive: true },
-      { title: "Courses", url: "/courses", order: 3, isActive: true },
+      { title: "Services", url: "/services", order: 3, isActive: true },
       { title: "Contact", url: "/contact", order: 4, isActive: true },
     ],
     contactInfo: {
@@ -39,30 +38,7 @@ export default function HeaderSettings() {
     },
   });
 
-  // Load existing settings on component mount
-  useEffect(() => {
-    if (selectedBranch) {
-      loadHeaderSettings();
-    }
-  }, [selectedBranch]);
-
-  const loadHeaderSettings = async () => {
-    if (!selectedBranch) return;
-    
-    try {
-      setIsLoading(true);
-      const settings = await settingsService.getBranchSettings(selectedBranch._id);
-      
-      if (settings.header) {
-        setHeaderData(settings.header);
-      }
-    } catch (error) {
-      console.error('Error loading header settings:', error);
-      toast.error('Failed to load header settings');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Remove useEffect and loadHeaderSettings as no longer needed
 
   const handleSave = async () => {
     if (!selectedBranch) {
@@ -87,7 +63,22 @@ export default function HeaderSettings() {
   };
 
   const handleCancel = () => {
-    loadHeaderSettings(); // Reset to original values
+    // Reset form to initial values
+    setHeaderData({
+      siteName: "",
+      tagline: "",
+      logo: "",
+      navigation: [
+        { title: "Home", url: "/", order: 1, isActive: true },
+        { title: "About", url: "/about", order: 2, isActive: true },
+        { title: "Services", url: "/services", order: 3, isActive: true },
+        { title: "Contact", url: "/contact", order: 4, isActive: true },
+      ],
+      contactInfo: {
+        phone: "",
+        email: "",
+      },
+    });
     setLogoFile(null);
     toast.info('Changes cancelled');
   };
@@ -147,16 +138,6 @@ export default function HeaderSettings() {
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="text-center py-8">
           <p className="text-muted-foreground">Please select a branch to manage header settings</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       </div>
     );

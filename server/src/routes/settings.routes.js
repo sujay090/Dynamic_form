@@ -24,7 +24,7 @@ router.route("/header").patch(upload.single("logo"), updateHeaderSettings);
 
 router.route("/body").patch(
   upload.fields([
-    { name: "heroBackground", maxCount: 1 },
+    { name: "heroBackgrounds", maxCount: 10 }, // Changed to support multiple hero images
     { name: "aboutImage", maxCount: 1 },
     { name: "ctaBackground", maxCount: 1 },
   ]), 

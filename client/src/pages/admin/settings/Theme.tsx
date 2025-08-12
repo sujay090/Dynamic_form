@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,6 @@ import { useBranchSelection } from "@/hooks/useBranchSelection";
 
 export default function ThemeSettings() {
   const { selectedBranch } = useBranchSelection();
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   const [themeData, setThemeData] = useState<ThemeSettings>({
@@ -20,6 +19,8 @@ export default function ThemeSettings() {
     accentColor: "#10b981", // Emerald
     fontFamily: "Inter",
   });
+
+  // Remove useEffect and loadThemeSettings as no longer needed
 
   // Predefined color themes
   const colorThemes = [
@@ -68,31 +69,6 @@ export default function ThemeSettings() {
     "Ubuntu",
   ];
 
-  // Load existing settings on component mount
-  useEffect(() => {
-    if (selectedBranch) {
-      loadThemeSettings();
-    }
-  }, [selectedBranch]);
-
-  const loadThemeSettings = async () => {
-    if (!selectedBranch) return;
-    
-    try {
-      setIsLoading(true);
-      const settings = await settingsService.getBranchSettings(selectedBranch._id);
-      
-      if (settings.theme) {
-        setThemeData(settings.theme);
-      }
-    } catch (error) {
-      console.error('Error loading theme settings:', error);
-      toast.error('Failed to load theme settings');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSave = async () => {
     if (!selectedBranch) {
       toast.error('Please select a branch first');
@@ -115,7 +91,13 @@ export default function ThemeSettings() {
   };
 
   const handleCancel = () => {
-    loadThemeSettings(); // Reset to original values
+    // Reset to default theme
+    setThemeData({
+      primaryColor: "#3b82f6",
+      secondaryColor: "#64748b",
+      accentColor: "#10b981",
+      fontFamily: "Inter",
+    });
     toast.info('Changes cancelled');
   };
 
@@ -144,16 +126,6 @@ export default function ThemeSettings() {
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="text-center py-8">
           <p className="text-muted-foreground">Please select a branch to manage theme settings</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       </div>
     );
