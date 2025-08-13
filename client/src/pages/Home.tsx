@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { settingsService } from '../API/services/settingsService';
+import { publicService } from '../API/services/publicService';
 import type { BranchSettings } from '../API/services/settingsService';
+import type { PublicStatistics } from '../API/services/publicService';
 import {
     TopBar,
     Header,
@@ -8,17 +10,22 @@ import {
     ServicesSection,
     AboutSection,
     CTASection,
-    Footer
+    Footer,
+    StatisticsSection
 } from '../components/user';
+import { Chatbot } from '../components/ui/chatbot';
 
 function Home() {
     const [settings, setSettings] = useState<BranchSettings | null>(null);
+    const [statistics, setStatistics] = useState<PublicStatistics | null>(null);
     const [loading, setLoading] = useState(true);
+    const [statisticsLoading, setStatisticsLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isCarouselPaused, setIsCarouselPaused] = useState(false);
 
     useEffect(() => {
         fetchSettings();
+        fetchStatistics();
     }, []);
 
     // Auto-rotate carousel images every 5 seconds
@@ -42,6 +49,20 @@ function Home() {
             console.error('Error fetching settings:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchStatistics = async () => {
+        try {
+            setStatisticsLoading(true);
+            console.log('Fetching statistics...');
+            const data = await publicService.getPublicStatistics();
+            console.log('Statistics data received:', data);
+            setStatistics(data);
+        } catch (error) {
+            console.error('Error fetching statistics:', error);
+        } finally {
+            setStatisticsLoading(false);
         }
     };
 
@@ -134,10 +155,20 @@ function Home() {
                     nextImage={nextImage}
                     prevImage={prevImage}
                 />
+                <StatisticsSection
+                    statistics={statistics}
+                    loading={statisticsLoading}
+                />
                 <ServicesSection settings={settings} />
                 <AboutSection settings={settings} />
                 <CTASection settings={settings} />
                 <Footer settings={settings} />
+
+                {/* Chatbot */}
+                <Chatbot
+                    primaryColor={settings?.theme?.primaryColor}
+                    siteName={settings?.header?.siteName}
+                />
             </div>
         </>
     );

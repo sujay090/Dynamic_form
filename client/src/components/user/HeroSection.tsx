@@ -63,7 +63,7 @@ export const HeroSection = ({
                             <div
                                 className="w-full h-full"
                                 style={{
-                                    background: `linear-gradient(135deg, ${settings.theme?.primaryColor || 'var(--primary-color)'}, ${settings.theme?.secondaryColor || 'var(--secondary-color)'})`
+                                    background: `linear-gradient(135deg, ${settings.theme?.primaryColor || '#059669'}, ${settings.theme?.secondaryColor || '#374151'})`
                                 }}
                             />
                         );
@@ -71,7 +71,7 @@ export const HeroSection = ({
                 })()}
 
                 {/* Simple overlay */}
-                <div className="absolute inset-0 bg-black/40"></div>
+                <div className="absolute inset-0 bg-black/40 z-1"></div>
             </div>
 
             {/* Simple Carousel Controls */}
@@ -104,28 +104,28 @@ export const HeroSection = ({
             })()}
 
             {/* Clean Hero Content */}
-            <div className="relative z-10 text-center text-white px-6 max-w-5xl mx-auto">
-                <div className="animate-fadeInUp">
+            <div className="relative z-30 text-center text-white px-6 max-w-5xl mx-auto">
+                <div>
                     {settings.body?.hero?.title ? (
-                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-white drop-shadow-lg">
                             {settings.body.hero.title}
                         </h1>
                     ) : (
                         <div className="mb-6">
-                            <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight text-white">
+                            <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight text-white drop-shadow-lg">
                                 Professional Institute
                             </h1>
-                            <p className="text-lg text-white/80">Configure your title in settings</p>
+                            <p className="text-lg text-white/80 drop-shadow-md">Configure your title in settings</p>
                         </div>
                     )}
 
                     {settings.body?.hero?.subtitle ? (
-                        <p className="text-xl md:text-2xl mb-10 leading-relaxed text-white/90 max-w-4xl mx-auto font-light">
+                        <p className="text-xl md:text-2xl mb-10 leading-relaxed text-white/90 max-w-4xl mx-auto font-light drop-shadow-md">
                             {settings.body.hero.subtitle}
                         </p>
                     ) : (
                         <div className="mb-10">
-                            <p className="text-lg text-white/80 max-w-3xl mx-auto font-light">
+                            <p className="text-lg text-white/80 max-w-3xl mx-auto font-light drop-shadow-md">
                                 Add your subtitle content in settings to showcase your institute
                             </p>
                         </div>
@@ -135,9 +135,9 @@ export const HeroSection = ({
                     {settings.body?.hero?.ctaButton?.isVisible && settings.body.hero.ctaButton.text ? (
                         <Button
                             size="lg"
-                            className="text-lg px-10 py-4 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                            className="text-lg px-10 py-4 text-white font-semibold rounded-xl shadow-lg"
                             style={{
-                                background: `linear-gradient(135deg, ${settings.theme?.primaryColor || 'var(--primary-color)'}, ${settings.theme?.accentColor || 'var(--accent-color)'})`
+                                background: `linear-gradient(135deg, ${settings.theme?.primaryColor || '#059669'}, ${settings.theme?.accentColor || '#dc2626'})`
                             }}
                             onClick={() => {
                                 if (settings.body?.hero?.ctaButton?.url) {
@@ -166,7 +166,7 @@ export const HeroSection = ({
                                 className="h-full rounded-full transition-all duration-75 ease-linear"
                                 style={{
                                     width: `${((currentImageIndex + 1) / backgroundImages.length) * 100}%`,
-                                    background: settings.theme?.primaryColor || 'var(--primary-color)',
+                                    backgroundColor: settings.theme?.primaryColor || '#059669',
                                     animation: isCarouselPaused ? 'none' : 'progress 5000ms linear infinite'
                                 }}
                             />
@@ -194,7 +194,7 @@ export const HeroSection = ({
                                     }`}
                                 style={{
                                     backgroundColor: index === currentImageIndex
-                                        ? settings.theme?.primaryColor || 'var(--primary-color)'
+                                        ? settings.theme?.primaryColor || '#059669'
                                         : undefined
                                 }}
                             />

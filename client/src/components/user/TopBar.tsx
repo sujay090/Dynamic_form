@@ -13,7 +13,9 @@ export const TopBar = ({ settings }: TopBarProps) => {
     return (
         <div
             className="text-white py-3 px-4"
-            style={{ backgroundColor: settings.theme?.primaryColor || 'var(--primary-color)' }}
+            style={{
+                backgroundColor: settings.theme?.primaryColor || '#059669'
+            }}
         >
             <div className="container mx-auto flex justify-between items-center text-sm">
                 <div className="flex items-center space-x-6">

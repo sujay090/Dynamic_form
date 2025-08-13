@@ -68,7 +68,7 @@ const api: AxiosInstance = axios.create({
 // Request interceptor
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     // Define public endpoints that don't require authentication
-    const publicEndpoints = ['/dynamic-forms'];
+    const publicEndpoints = ['/dynamic-forms', '/public'];
 
     // Check if this is a public endpoint
     const isPublicEndpoint = publicEndpoints.some(endpoint =>
@@ -142,7 +142,7 @@ api.interceptors.response.use(
         };
 
         // Define public endpoints that don't require authentication
-        const publicEndpoints = ['/dynamic-forms'];
+        const publicEndpoints = ['/dynamic-forms', '/public'];
         const isPublicEndpoint = publicEndpoints.some(endpoint =>
             originalRequest.url?.includes(endpoint)
         );

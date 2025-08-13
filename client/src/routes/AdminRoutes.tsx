@@ -24,28 +24,32 @@ const HeaderSettings = lazy(() => import("@/pages/admin/settings/Header"));
 const FooterSettings = lazy(() => import("@/pages/admin/settings/Footer"));
 const BodySettings = lazy(() => import("@/pages/admin/settings/Body"));
 const ThemeSettings = lazy(() => import("@/pages/admin/settings/Theme"));
+//certificates
+const CertificateManagement = lazy(() => import("@/pages/admin/certificate/CertificateManagement"));
 
 export const AdminRoutes = [
-  //dashboard  
-  <Route index element={<Dashboard />} />,
-  <Route path="dashboard" element={<Dashboard />} />,
-  //course
-  <Route path="courses" element={<DynamicCourseList />} />,
-  <Route path="courses/:id" element={<CourseView />} />,
-  <Route path="courses/add" element={<DynamicForm formType="course" />} />, 
-  <Route path="course/categories" element={<Category />} />,
-  <Route path="course/papers" element={<Paper />} />,
-  //Branch
-  <Route path="branches/add" element={<DynamicForm formType="branch" />} />, 
-  <Route path="branches" element={<DynamicBranchList />} />,
-  //student
-  <Route path="students/:status" element={<StudentList />} />,
-  <Route path="students/add" element={<DynamicForm formType="student" />} />,
-  <Route path="students/registered" element={<RegisteredStudents />} />,
-  <Route path="students/passout" element={<PassOutStudents />} />,
-  //settings
-  <Route path="settings/header" element={<HeaderSettings />} />,
-  <Route path="settings/footer" element={<FooterSettings />} />,
-  <Route path="settings/body" element={<BodySettings />} />,
-  <Route path="settings/theme" element={<ThemeSettings />} />,
+    //dashboard  
+    <Route index element={<Dashboard />} />,
+    <Route path="dashboard" element={<Dashboard />} />,
+    //course
+    <Route path="courses" element={<DynamicCourseList />} />,
+    <Route path="courses/:id" element={<CourseView />} />,
+    <Route path="courses/add" element={<DynamicForm formType="course" />} />,
+    <Route path="course/categories" element={<Category />} />,
+    <Route path="course/papers" element={<Paper />} />,
+    //Branch
+    <Route path="branches/add" element={<DynamicForm formType="branch" />} />,
+    <Route path="branches" element={<DynamicBranchList />} />,
+    //student
+    <Route path="students/:status" element={<StudentList />} />,
+    <Route path="students/add" element={<DynamicForm formType="student" />} />,
+    <Route path="students/registered" element={<RegisteredStudents />} />,
+    <Route path="students/passout" element={<PassOutStudents />} />,
+    //settings
+    <Route path="settings/header" element={<HeaderSettings />} />,
+    <Route path="settings/footer" element={<FooterSettings />} />,
+    <Route path="settings/body" element={<BodySettings />} />,
+    <Route path="settings/theme" element={<ThemeSettings />} />,
+    //certificates
+    <Route path="certificates" element={<CertificateManagement />} />,
 ]
