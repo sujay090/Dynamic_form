@@ -1,10 +1,10 @@
 import express from "express";
 import {
-  createFormData,
-  updateFormData,
-  getAllFormData,
-  deleteFormData,
-} from "../controllers/student.controller.js";
+    createFormData,
+    updateFormData,
+    getAllFormData,
+    deleteFormData,
+} from "../controllers/dynamicData.controller.js";
 
 import { upload } from "../middlewares/multer.middleware.js";
 

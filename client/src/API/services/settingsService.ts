@@ -66,6 +66,12 @@ export interface BodySettings {
         buttonUrl?: string;
         backgroundImage?: string;
     };
+    contact?: {
+        title?: string;
+        description?: string;
+        isVisible?: boolean;
+        showForm?: boolean;
+    };
 }
 
 export interface FooterSettings {

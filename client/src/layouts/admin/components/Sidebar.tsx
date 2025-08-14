@@ -93,6 +93,10 @@ const data = {
                     title: "Pass Out Students",
                     url: "/admin/students/passout",
                 },
+                {
+                    title: "New Students",
+                    url: "/admin/new-students",
+                },
             ],
         },
         {

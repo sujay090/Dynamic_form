@@ -1,6 +1,6 @@
 import { BookOpen, Clock, ChevronRight, Phone } from 'lucide-react';
 import { Button } from '../ui/button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getDynamicFormDataAPI } from '../../API/services/studentService';
 import type { BranchSettings } from '../../API/services/settingsService';
 
@@ -20,6 +20,46 @@ interface Course {
 }
 
 export const ServicesSection = ({ settings }: ServicesSectionProps) => {
+    // Drag-to-scroll logic
+    const scrollRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const slider = scrollRef.current;
+        if (!slider) return;
+        let isDown = false;
+        let startX = 0;
+        let scrollLeft = 0;
+        const handleMouseDown = (e: MouseEvent) => {
+            isDown = true;
+            slider.classList.add('active');
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        };
+        const handleMouseLeave = () => {
+            isDown = false;
+            slider.classList.remove('active');
+        };
+        const handleMouseUp = () => {
+            isDown = false;
+            slider.classList.remove('active');
+        };
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2;
+            slider.scrollLeft = scrollLeft - walk;
+        };
+        slider.addEventListener('mousedown', handleMouseDown);
+        slider.addEventListener('mouseleave', handleMouseLeave);
+        slider.addEventListener('mouseup', handleMouseUp);
+        slider.addEventListener('mousemove', handleMouseMove);
+        return () => {
+            slider.removeEventListener('mousedown', handleMouseDown);
+            slider.removeEventListener('mouseleave', handleMouseLeave);
+            slider.removeEventListener('mouseup', handleMouseUp);
+            slider.removeEventListener('mousemove', handleMouseMove);
+        };
+    }, []);
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -94,7 +134,7 @@ export const ServicesSection = ({ settings }: ServicesSectionProps) => {
                     </div>
                 ) : courses && courses.length > 0 ? (
                     <>
-                        <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-8">
+                        <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar">
                             {courses.map((course, index) => {
                                 const courseName = getFieldValue(course.fieldsData, 'courseName') || 'Course';
                                 const description = getFieldValue(course.fieldsData, 'description') || 'No description available';
@@ -102,10 +142,9 @@ export const ServicesSection = ({ settings }: ServicesSectionProps) => {
                                 const duration = getFieldValue(course.fieldsData, 'duration') || 0;
                                 const category = getFieldValue(course.fieldsData, 'category') || 'General';
                                 const courseImage = getFieldValue(course.fieldsData, 'courseImage');
-                                // Construct full image URL from backend (correct port is 4070)
                                 const fullImageUrl = courseImage ?
                                     (courseImage.startsWith('http') ? courseImage : `http://localhost:4070${courseImage}`) :
-                                    null;                                // Generate different gradient colors for variety
+                                    null;
                                 const gradients = [
                                     'from-blue-500 to-purple-600',
                                     'from-green-500 to-teal-600',
@@ -119,28 +158,27 @@ export const ServicesSection = ({ settings }: ServicesSectionProps) => {
                                 return (
                                     <div
                                         key={course._id}
-                                        className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
+                                        className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex-shrink-0"
+                                        style={{ width: 250 }}
                                     >
-                                        {/* Image Section - Using gradient with course name or actual image if available */}
-                                        <div className={`relative h-64 ${!fullImageUrl ? `bg-gradient-to-br ${gradientClass}` : 'bg-gray-100'} flex items-center justify-center overflow-hidden`}>
+                                        <div className={`relative h-40 ${!fullImageUrl ? `bg-gradient-to-br ${gradientClass}` : 'bg-gray-100'} flex items-center justify-center overflow-hidden`}>
                                             {fullImageUrl ? (
                                                 <img
                                                     src={fullImageUrl}
                                                     alt={courseName}
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
-                                                        // Fallback to gradient if image fails to load
                                                         const target = e.target as HTMLImageElement;
                                                         const container = target.parentElement;
                                                         if (container) {
                                                             target.style.display = 'none';
-                                                            container.className = `relative h-64 bg-gradient-to-br ${gradientClass} flex items-center justify-center overflow-hidden`;
+                                                            container.className = `relative h-40 bg-gradient-to-br ${gradientClass} flex items-center justify-center overflow-hidden`;
                                                             container.innerHTML = `
-                                                                <div class="text-white text-center p-6">
-                                                                    <svg class="w-12 h-12 mx-auto mb-3" fill="currentColor" viewBox="0 0 24 24">
-                                                                        <path d="M12 6.042A8.967 8.967 0 006 3c-1.334 0-2.577.302-3.691.846-.37.18-.609.552-.609.984v15.34c0 .708.707 1.198 1.37.832C4.188 20.542 5.089 20.25 6 20.25c1.334 0 2.577.302 3.691.846.37.18.609.552.609.984v-.84c0-.432-.24-.805-.609-.985C8.577 19.802 7.334 19.5 6 19.5c-.91 0-1.81.292-2.93.832V5.17A6.967 6.967 0 016 4.5c1.334 0 2.577-.302 3.691-.846.37-.18.609-.552.609-.984V2.83c0 .432.24.805.609.985C11.423 4.198 12.666 4.5 14 4.5c.91 0 1.81-.292 2.93-.832v14.662c-1.12-.54-2.02-.832-2.93-.832-1.334 0-2.577.302-3.691.846-.37.18-.609.552-.609.984v.84c0-.432.24-.804.609-.984C10.423 19.698 11.666 20 13 20c.91 0 1.81.292 2.93.832.663.366 1.37-.124 1.37-.832V4.83c0-.432-.24-.805-.609-.985C15.577 3.302 14.334 3 13 3c-1.334 0-2.577.302-3.691.846-.37.18-.609.552-.609.984v1.212z" />
+                                                                <div class=\"text-white text-center p-6\">
+                                                                    <svg class=\"w-12 h-12 mx-auto mb-3\" fill=\"currentColor\" viewBox=\"0 0 24 24\">
+                                                                        <path d=\"M12 6.042A8.967 8.967 0 006 3c-1.334 0-2.577.302-3.691.846-.37.18-.609.552-.609.984v15.34c0 .708.707 1.198 1.37.832C4.188 20.542 5.089 20.25 6 20.25c1.334 0 2.577.302 3.691.846.37.18.609.552.609.984v-.84c0-.432-.24-.805-.609-.985C8.577 19.802 7.334 19.5 6 19.5c-.91 0-1.81.292-2.93.832V5.17A6.967 6.967 0 016 4.5c1.334 0 2.577-.302 3.691-.846.37-.18.609-.552.609-.984V2.83c0 .432.24.805.609.985C11.423 4.198 12.666 4.5 14 4.5c.91 0 1.81-.292 2.93-.832v14.662c-1.12-.54-2.02-.832-2.93-.832-1.334 0-2.577.302-3.691.846-.37.18-.609.552-.609.984v.84c0-.432.24-.804.609-.984C10.423 19.698 11.666 20 13 20c.91 0 1.81.292 2.93.832.663.366 1.37-.124 1.37-.832V4.83c0-.432-.24-.805-.609-.985C15.577 3.302 14.334 3 13 3c-1.334 0-2.577.302-3.691.846-.37.18-.609.552-.609.984v1.212z\" />
                                                                     </svg>
-                                                                    <h4 class="text-lg font-bold text-center leading-tight">${courseName}</h4>
+                                                                    <h4 class=\"text-lg font-bold text-center leading-tight\">${courseName}</h4>
                                                                 </div>
                                                             `;
                                                         }
@@ -154,15 +192,11 @@ export const ServicesSection = ({ settings }: ServicesSectionProps) => {
                                                     </h4>
                                                 </div>
                                             )}
-                                            {/* Overlay gradient */}
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                                         </div>
-
-                                        {/* Content Section */}
-                                        <div className="p-6">
-                                            {/* Category Badge */}
+                                        <div className="p-4">
                                             <span
-                                                className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-3"
+                                                className="inline-block px-2 py-1 rounded-full text-xs font-medium mb-2"
                                                 style={{
                                                     backgroundColor: `${settings.theme?.primaryColor || '#059669'}20`,
                                                     color: settings.theme?.primaryColor || '#059669'
@@ -170,27 +204,21 @@ export const ServicesSection = ({ settings }: ServicesSectionProps) => {
                                             >
                                                 Course
                                             </span>
-
-                                            <h3 className="text-lg font-bold text-gray-900 mb-2">
+                                            <h3 className="text-base font-bold text-gray-900 mb-1">
                                                 {courseName}
                                             </h3>
-
-                                            <p className="text-gray-600 mb-4 text-sm leading-relaxed line-clamp-3">
+                                            <p className="text-gray-600 mb-2 text-xs leading-relaxed line-clamp-2">
                                                 {description}
                                             </p>
-
-                                            {/* Course Details */}
-                                            <div className="flex justify-between items-center mb-4">
-                                                <div className="flex gap-3 text-xs text-gray-500">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div className="flex gap-2 text-xs text-gray-500">
                                                     <div className="flex items-center gap-1">
                                                         <Clock size={12} />
                                                         <span>{duration} months</span>
                                                     </div>
                                                 </div>
-
-                                                {/* Price */}
                                                 <div
-                                                    className="text-white px-3 py-1 rounded-full font-bold text-sm"
+                                                    className="text-white px-2 py-1 rounded-full font-bold text-xs"
                                                     style={{
                                                         backgroundColor: settings.theme?.primaryColor || '#059669'
                                                     }}
@@ -198,10 +226,8 @@ export const ServicesSection = ({ settings }: ServicesSectionProps) => {
                                                     ₹{Number(price).toLocaleString()}
                                                 </div>
                                             </div>
-
-                                            {/* Enroll Button */}
                                             <button
-                                                className="w-full text-white font-semibold py-2.5 px-4 rounded-lg shadow-md text-sm hover:shadow-lg transition-all duration-300"
+                                                className="w-full text-white font-semibold py-2 px-2 rounded-lg shadow-md text-xs hover:shadow-lg transition-all duration-300"
                                                 style={{
                                                     backgroundColor: settings.theme?.primaryColor || '#059669'
                                                 }}
@@ -209,9 +235,9 @@ export const ServicesSection = ({ settings }: ServicesSectionProps) => {
                                                     console.log('Enroll in course:', courseName);
                                                 }}
                                             >
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <span>Enroll Now</span>
-                                                    <ChevronRight size={14} />
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <span>Enroll</span>
+                                                    <ChevronRight size={12} />
                                                 </div>
                                             </button>
                                         </div>

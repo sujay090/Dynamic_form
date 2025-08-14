@@ -37,17 +37,26 @@ const refreshToken = async (): Promise<string> => {
         const res = await refreshAccessTokenAPI();
 
         if (res.status === 200) {
-            const newToken = res.data.data.accessToken;
+                    const newToken = res.data.data.accessToken;
+        // Store token in the appropriate location based on current user type
+        const adminToken = localStorage.getItem("adminToken");
+        if (adminToken) {
+            localStorage.setItem("adminToken", newToken);
+        } else {
             localStorage.setItem("token", newToken);
-            api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-            processQueue(null, newToken);
-            return newToken;
+        }
+        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+        processQueue(null, newToken);
+        return newToken;
         }
 
         throw new Error("Failed to refresh token");
     } catch (err) {
         processQueue(err, null);
-        localStorage.clear();
+        // Clear all tokens including admin tokens
+        localStorage.removeItem("token");
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("superAdminToken");
         persistor.purge();
         store.dispatch(logout());
         window.location.replace("/login");
@@ -81,7 +90,9 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     }
 
     // Only add token if it exists and the request is not to a public endpoint
-    const token = localStorage.getItem("token");
+    // Check for admin token first, then fallback to regular token
+    const adminToken = localStorage.getItem("adminToken");
+    const token = adminToken || localStorage.getItem("token");
 
     // If no token exists, proceed with the request without authentication
     if (!token) {

@@ -53,6 +53,12 @@ export default function BodySettings() {
             buttonUrl: "",
             backgroundImage: "",
         },
+        contact: {
+            title: "",
+            description: "",
+            isVisible: true,
+            showForm: true,
+        },
     });
 
     // Load existing settings on component mount
@@ -134,6 +140,12 @@ export default function BodySettings() {
                 buttonText: "",
                 buttonUrl: "",
                 backgroundImage: "",
+            },
+            contact: {
+                title: "",
+                description: "",
+                isVisible: true,
+                showForm: true,
             },
         });
         setHeroBackgroundFiles([]);
@@ -658,6 +670,64 @@ export default function BodySettings() {
                                     New image selected: {ctaBackgroundFile.name}
                                 </p>
                             )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Contact Us Section */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Contact Us Section</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                            <Switch
+                                id="contactVisible"
+                                checked={bodyData.contact?.isVisible ?? true}
+                                onCheckedChange={(checked) => setBodyData(prev => ({
+                                    ...prev,
+                                    contact: { ...prev.contact!, isVisible: checked }
+                                }))}
+                            />
+                            <Label htmlFor="contactVisible">Show Contact Us Section</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Switch
+                                id="contactFormVisible"
+                                checked={bodyData.contact?.showForm ?? true}
+                                onCheckedChange={(checked) => setBodyData(prev => ({
+                                    ...prev,
+                                    contact: { ...prev.contact!, showForm: checked }
+                                }))}
+                            />
+                            <Label htmlFor="contactFormVisible">Show Contact Form</Label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="contactTitle">Contact Section Title</Label>
+                                <Input
+                                    id="contactTitle"
+                                    placeholder="Contact Us"
+                                    value={bodyData.contact?.title || ''}
+                                    onChange={(e) => setBodyData(prev => ({
+                                        ...prev,
+                                        contact: { ...prev.contact!, title: e.target.value }
+                                    }))}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="contactDescription">Contact Section Description</Label>
+                            <Textarea
+                                id="contactDescription"
+                                placeholder="Get in touch with us to learn more about our courses..."
+                                rows={3}
+                                value={bodyData.contact?.description || ''}
+                                onChange={(e) => setBodyData(prev => ({
+                                    ...prev,
+                                    contact: { ...prev.contact!, description: e.target.value }
+                                }))}
+                            />
                         </div>
                     </CardContent>
                 </Card>

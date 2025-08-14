@@ -1,4 +1,4 @@
-import DynamicFormData from "../models/student.model.js";
+import DynamicFormData from "../models/dynamicData.model.js";
 import { ApiError } from "../utils/apiArror.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import PDFDocument from "pdfkit";

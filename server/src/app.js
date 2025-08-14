@@ -22,7 +22,7 @@ app.use(cookieParser());
 
 // Import routes
 import userRoutes from "./routes/user.routes.js";
-import studentRoutes from "./routes/student.routes.js";
+import studentRoutes from "./routes/dynamicData.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import courseCategoryRoutes from "./routes/courseCategory.routes.js";
 import coursePaperRoutes from "./routes/coursePaper.routes.js";
@@ -37,6 +37,7 @@ import settingsRoutes from "./routes/settings.routes.js";
 import certificateRoutes from "./routes/certificate.routes.js";
 import publicRoutes from "./routes/public.routes.js";
 import chatbotRoutes from "./routes/chatbot.routes.js";
+import contactRoutes from "./routes/contact.routes.js";
 
 // Use routes
 app.use("/api/v1/users", userRoutes);
@@ -55,4 +56,5 @@ app.use("/api/v1/settings", settingsRoutes);
 app.use("/api/v1/certificates", certificateRoutes);
 app.use("/api/v1/public", publicRoutes);
 app.use("/api/v1/chatbot", chatbotRoutes);
+app.use("/api/v1/contact", contactRoutes);
 export { app };

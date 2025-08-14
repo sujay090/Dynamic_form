@@ -2,14 +2,14 @@ import fetch from 'node-fetch';
 import https from 'https';
 import { ApiError } from "../utils/apiArror.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import DynamicFormData from "../models/student.model.js";
+import DynamicFormData from "../models/dynamicData.model.js";
 
 // LLM Integration - You can use OpenAI GPT or Google Gemini
 const generateLLMResponse = async (userMessage, contextData) => {
     try {
         // Check if API key is properly configured
-        if (!process.env.GEMINI_API_KEY || 
-            process.env.GEMINI_API_KEY === 'your_api_key_here' || 
+        if (!process.env.GEMINI_API_KEY ||
+            process.env.GEMINI_API_KEY === 'your_api_key_here' ||
             process.env.GEMINI_API_KEY === 'YOUR_ACTUAL_GEMINI_API_KEY_HERE') {
             console.warn('Gemini API key not configured properly. Falling back to static responses.');
             return generateEnhancedStaticResponse(userMessage, contextData);
@@ -20,7 +20,7 @@ const generateLLMResponse = async (userMessage, contextData) => {
 
         // Check if this is a greeting/first interaction
         const isGreeting = /^(hello|hi|hey|namaste|helo|hola)\b/i.test(userMessage.trim());
-        
+
         const systemPrompt = isHinglish ?
             `You are Max, a friendly AI assistant who works for an educational institute but can answer any question. Respond in Indian English and Hinglish (Hindi-English mix) style. Be casual, friendly and use words like "yaar", "bhai", "dekho", "arre" etc. ${isGreeting ? 'Introduce yourself as "Main Max hun" in this greeting response.' : 'Do not introduce yourself again - just answer the question directly.'}
             
@@ -63,11 +63,11 @@ const generateLLMResponse = async (userMessage, contextData) => {
             const errorData = await response.text();
             console.error(`Gemini API Error: ${response.status} - ${response.statusText}`);
             console.error('Error details:', errorData);
-            
+
             if (response.status === 400) {
                 console.error('API Key might be invalid or missing. Check your GEMINI_API_KEY in .env file');
             }
-            
+
             return generateEnhancedStaticResponse(userMessage, contextData);
         }
 

@@ -16,6 +16,7 @@ const DynamicBranchList = lazy(() => import("@/pages/admin/branch/DynamicBranchL
 const StudentList = lazy(() => import("@/pages/admin/student/List"));
 const RegisteredStudents = lazy(() => import("@/pages/admin/student/RegisteredStudents"));
 const PassOutStudents = lazy(() => import("@/pages/admin/student/PassOutStudents"));
+const NewStudents = lazy(() => import("@/pages/admin/NewStudents"));
 // const StudentForm = lazy(
 //   () => import("@/layouts/admin/components/student/StudentForm")
 // );
@@ -45,6 +46,7 @@ export const AdminRoutes = [
     <Route path="students/add" element={<DynamicForm formType="student" />} />,
     <Route path="students/registered" element={<RegisteredStudents />} />,
     <Route path="students/passout" element={<PassOutStudents />} />,
+    <Route path="new-students" element={<NewStudents />} />,
     //settings
     <Route path="settings/header" element={<HeaderSettings />} />,
     <Route path="settings/footer" element={<FooterSettings />} />,

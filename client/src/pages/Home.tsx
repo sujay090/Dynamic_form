@@ -10,6 +10,7 @@ import {
     ServicesSection,
     AboutSection,
     CTASection,
+    ContactSection,
     Footer,
     StatisticsSection
 } from '../components/user';
@@ -162,6 +163,7 @@ function Home() {
                 <ServicesSection settings={settings} />
                 <AboutSection settings={settings} />
                 <CTASection settings={settings} />
+                <ContactSection settings={settings} />
                 <Footer settings={settings} />
 
                 {/* Chatbot */}
