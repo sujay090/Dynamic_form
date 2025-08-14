@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+import https from 'https';
 import { ApiError } from "../utils/apiArror.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import DynamicFormData from "../models/student.model.js";
@@ -5,24 +7,35 @@ import DynamicFormData from "../models/student.model.js";
 // LLM Integration - You can use OpenAI GPT or Google Gemini
 const generateLLMResponse = async (userMessage, contextData) => {
     try {
+        // Check if API key is properly configured
+        if (!process.env.GEMINI_API_KEY || 
+            process.env.GEMINI_API_KEY === 'your_api_key_here' || 
+            process.env.GEMINI_API_KEY === 'YOUR_ACTUAL_GEMINI_API_KEY_HERE') {
+            console.warn('Gemini API key not configured properly. Falling back to static responses.');
+            return generateEnhancedStaticResponse(userMessage, contextData);
+        }
+
         const isHinglish = /\b(yaar|bhai|dekho|dekha|arre|arrey|kya|hai|hain|ke|ka|ki|mein|main|mujhe|tumhe|se|aur|toh|matlab|kaise|kaha|kahan|kitna|kitni|batao|bataye|chahiye|chahie|karo|kare|karte|karta|karti|milega|milegi|lagega|lagegi|dikhao|dikhaye|pata|sakte|sakta|sakti|hoga|hogi|wala|wali|wale|bilkul|zyada|bahut|thoda|accha|acchi|bura|buri|paisa|paise|rupees|lakh|hazaar|nahi|nahin|haan|ji)\b/i.test(userMessage) ||
             /[\u0900-\u097F]/.test(userMessage); // Hindi characters
 
+        // Check if this is a greeting/first interaction
+        const isGreeting = /^(hello|hi|hey|namaste|helo|hola)\b/i.test(userMessage.trim());
+        
         const systemPrompt = isHinglish ?
-            `You are Max, a friendly AI assistant who works for an educational institute but can answer any question. Respond in Indian English and Hinglish (Hindi-English mix) style. Be casual, friendly and use words like "yaar", "bhai", "dekho", "arre" etc. Always introduce yourself as "Main Max hun" when greeting.
+            `You are Max, a friendly AI assistant who works for an educational institute but can answer any question. Respond in Indian English and Hinglish (Hindi-English mix) style. Be casual, friendly and use words like "yaar", "bhai", "dekho", "arre" etc. ${isGreeting ? 'Introduce yourself as "Main Max hun" in this greeting response.' : 'Do not introduce yourself again - just answer the question directly.'}
             
             For institute-related questions, use this data: ${JSON.stringify(contextData)}.
             For general questions (like math, science, facts, etc.), answer them normally but keep your friendly Hinglish style.
             For institute queries, be enthusiastic about courses, admissions, fees, and contact details.
             Always encourage users to contact for more specific institute information. Keep responses conversational and relatable to Indian students.` :
-            `You are Max, a friendly AI assistant who works for an educational institute but can answer any question. Respond in simple, clear English. Always introduce yourself as "I'm Max" when greeting.
+            `You are Max, a friendly AI assistant who works for an educational institute but can answer any question. Respond in simple, clear English. ${isGreeting ? 'Introduce yourself as "I\'m Max" in this greeting response.' : 'Do not introduce yourself again - just answer the question directly.'}
             
             For institute-related questions, use this data: ${JSON.stringify(contextData)}.
             For general questions (like math, science, facts, etc.), answer them normally while maintaining your helpful personality.
             For institute queries, be professional and provide accurate information about courses, admissions, fees, and contact details.
             Always encourage users to contact for more specific institute information. Keep responses helpful and informative.`;
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -47,7 +60,14 @@ const generateLLMResponse = async (userMessage, contextData) => {
         });
 
         if (!response.ok) {
-            console.error("Gemini API Error:", response.status);
+            const errorData = await response.text();
+            console.error(`Gemini API Error: ${response.status} - ${response.statusText}`);
+            console.error('Error details:', errorData);
+            
+            if (response.status === 400) {
+                console.error('API Key might be invalid or missing. Check your GEMINI_API_KEY in .env file');
+            }
+            
             return generateEnhancedStaticResponse(userMessage, contextData);
         }
 
@@ -78,8 +98,8 @@ const generateEnhancedStaticResponse = (userMessage, contextData) => {
     // Handle basic math questions
     if (lowerMessage.includes('2+2') || lowerMessage.includes('2 + 2')) {
         return isHinglish ?
-            "Arre yaar, 2+2 = 4 hai! Main Max hun, main koi bhi question ka answer de sakta hun - general questions bhi aur humara institute ke baare mein bhi. Kya aur puchna hai?" :
-            "2+2 = 4! I'm Max, I can answer any question - both general questions and about our institute. What else would you like to know?";
+            "Arre yaar, 2+2 = 4 hai! Kya aur puchna hai?" :
+            "2+2 = 4! What else would you like to know?";
     }
 
     // Handle other basic math
@@ -88,8 +108,8 @@ const generateEnhancedStaticResponse = (userMessage, contextData) => {
         try {
             const result = eval(mathMatch[0].replace(/[^0-9+\-*/().]/g, ''));
             return isHinglish ?
-                `Dekho yaar, ${mathMatch[0]} = ${result} hai! Main Max hun, math se lekar humara courses tak sabkuch ke baare mein bata sakta hun. Aur kya jaanna hai?` :
-                `${mathMatch[0]} = ${result}! I'm Max, I can help with math as well as information about our courses. What else would you like to know?`;
+                `Dekho yaar, ${mathMatch[0]} = ${result} hai! Aur kya jaanna hai?` :
+                `${mathMatch[0]} = ${result}! What else would you like to know?`;
         } catch (e) {
             // If eval fails, continue to other responses
         }
@@ -106,8 +126,8 @@ const generateEnhancedStaticResponse = (userMessage, contextData) => {
     if (lowerMessage.includes('time') || lowerMessage.includes('date') || lowerMessage.includes('today')) {
         const now = new Date();
         return isHinglish ?
-            `Abhi time hai ${now.toLocaleTimeString()} aur date hai ${now.toLocaleDateString()}. Main Max hun, general questions ke saath-saath humara institute ki complete info bhi de sakta hun!` :
-            `Current time is ${now.toLocaleTimeString()} and today's date is ${now.toLocaleDateString()}. I'm Max, I can handle general questions along with complete information about our institute!`;
+            `Abhi time hai ${now.toLocaleTimeString()} aur date hai ${now.toLocaleDateString()}. Kya aur jaanna chahte ho?` :
+            `Current time is ${now.toLocaleTimeString()} and today's date is ${now.toLocaleDateString()}. What else would you like to know?`;
     }
 
     if (lowerMessage.includes('course') || lowerMessage.includes('program') || lowerMessage.includes('कोर्स')) {
