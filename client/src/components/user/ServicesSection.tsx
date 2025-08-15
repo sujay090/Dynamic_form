@@ -226,20 +226,6 @@ export const ServicesSection = ({ settings }: ServicesSectionProps) => {
                                                     ₹{Number(price).toLocaleString()}
                                                 </div>
                                             </div>
-                                            <button
-                                                className="w-full text-white font-semibold py-2 px-2 rounded-lg shadow-md text-xs hover:shadow-lg transition-all duration-300"
-                                                style={{
-                                                    backgroundColor: settings.theme?.primaryColor || '#059669'
-                                                }}
-                                                onClick={() => {
-                                                    console.log('Enroll in course:', courseName);
-                                                }}
-                                            >
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <span>Enroll</span>
-                                                    <ChevronRight size={12} />
-                                                </div>
-                                            </button>
                                         </div>
                                     </div>
                                 );
